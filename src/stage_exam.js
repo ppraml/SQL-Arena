@@ -130,8 +130,17 @@ const StageExam = (() => {
         if(ur.ok){
           const solDb = SQLEngine.cloneDb(SEED_DB);
           const sr = SQLEngine.run(t.sol, solDb, {mutate:true});
-          if(t.type==='select') ok = SQLEngine.compareResults(ur, sr, !!t.orderMatters);
-          else ok = JSON.stringify((userDb[t.table]||[]).map(r=>JSON.stringify(Object.entries(r).sort())).sort()) === JSON.stringify((solDb[t.table]||[]).map(r=>JSON.stringify(Object.entries(r).sort())).sort());
+          if(t.type==='select'){
+            ok = SQLEngine.compareResults(ur, sr, !!t.orderMatters);
+          } else if(t.type==='createview'){
+            const uv = SQLEngine.run('SELECT * FROM '+t.viewName, userDb, {mutate:true});
+            const sv = SQLEngine.run('SELECT * FROM '+t.viewName, solDb, {mutate:true});
+            ok = !!(uv.ok && sv.ok && SQLEngine.compareResults(uv, sv, false));
+          } else if(t.type==='drop'){
+            ok = !Object.keys(userDb).some(k => k.toUpperCase() === t.table.toUpperCase());
+          } else {
+            ok = JSON.stringify((userDb[t.table]||[]).map(r=>JSON.stringify(Object.entries(r).sort())).sort()) === JSON.stringify((solDb[t.table]||[]).map(r=>JSON.stringify(Object.entries(r).sort())).sort());
+          }
         }
         registerAnswer(it.w, ok, 'Musterlösung: '+t.sol);
       };

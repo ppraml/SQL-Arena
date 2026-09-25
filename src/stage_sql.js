@@ -155,11 +155,23 @@ const StageSql = (() => {
       if(t.type === 'select'){
         out.innerHTML = renderTable(userRes.columns, userRes.rows);
         ok = SQLEngine.compareResults(userRes, solRes, !!t.orderMatters);
+      } else if(t.type === 'createview'){
+        const checkSql = 'SELECT * FROM ' + t.viewName;
+        const uv = SQLEngine.run(checkSql, userDb, {mutate:true});
+        const sv = SQLEngine.run(checkSql, solDb, {mutate:true});
+        out.innerHTML = uv.ok ? renderTable(uv.columns, uv.rows) : `<p class="sqlmsg err">⚠️ Fehler: ${esc(uv.error)}</p>`;
+        ok = !!(uv.ok && sv.ok && SQLEngine.compareResults(uv, sv, false));
+      } else if(t.type === 'drop'){
+        const gone = !Object.keys(userDb).some(k => k.toUpperCase() === t.table.toUpperCase());
+        out.innerHTML = `<p class="sqlmsg">${gone ? 'Tabelle wurde entfernt.' : 'Tabelle existiert noch.'}</p>`;
+        ok = gone;
       } else {
         out.innerHTML = `<p class="sqlmsg">${userRes.affected} Zeile(n) betroffen.</p>` + renderTable(Object.keys(userDb[t.table][0]||userDb[t.table]||{}), (userDb[t.table]||[]).slice(0,8).map(r=>Object.values(r)));
         ok = compareTableRows(userDb[t.table], solDb[t.table]);
       }
       noteWeak(world.id, ok);
+      const srcW = world.id === 'review' ? (t._srcWorld || world.id) : world.id;
+      if(ok) clearMissed('sql', srcW, t.id); else noteMissed('sql', srcW, t.id);
       if(ok) onCorrect(); else onWrong();
     }
 

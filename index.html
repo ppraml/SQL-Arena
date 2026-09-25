@@ -94,6 +94,17 @@ mark{background:linear-gradient(transparent 56%,var(--mk) 56% 94%,transparent 94
 .herostats b{font:800 24px var(--f-display)}
 .herostats span{font:600 11px var(--f-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--ink2)}
 
+.reviewcard{display:flex; align-items:center; gap:14px; border:1.5px dashed var(--warn); background:var(--warn-bg); border-radius:16px; padding:14px 16px; flex-wrap:wrap; margin-top:4px}
+.reviewcard .wicon{font-size:26px; flex-shrink:0}
+.reviewcard h3{margin:0 0 2px; font:800 15.5px var(--f-display); color:var(--warn)}
+.reviewcard p{margin:0; font-size:13px; color:var(--ink2)}
+.reviewtxt{flex:1 1 200px}
+.reviewbtns{display:flex; gap:8px; flex-wrap:wrap}
+.reviewcard-empty{border-style:solid; border-color:var(--a); background:var(--a-bg)}
+.reviewcard-empty h3{color:var(--a)}
+.warnbtn{border-color:var(--warn); color:var(--warn); background:var(--paper)}
+.warnbtn:hover{background:var(--warn-bg)}
+
 .path{display:flex; flex-direction:column; gap:22px; margin-top:18px}
 .worldsec{border:1.5px solid var(--line); background:var(--paper); border-radius:18px; padding:16px 16px 18px; position:relative; overflow:hidden}
 .worldsec::before{content:''; position:absolute; inset:0 0 auto 0; height:5px; background:var(--_c,var(--s))}
@@ -152,6 +163,7 @@ mark{background:linear-gradient(transparent 56%,var(--mk) 56% 94%,transparent 94
 .opt:disabled{cursor:default}
 .opt.correct{background:var(--a-bg); border-color:var(--a); color:var(--a)}
 .opt.wrong{background:var(--warn-bg); border-color:var(--warn); color:var(--warn)}
+.opt.dim{opacity:.55}
 .expl{margin-top:14px; padding:13px 16px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); font-size:14px; line-height:1.5}
 .expl.ok{border-color:var(--a); background:var(--a-bg)}
 .expl.no{border-color:var(--warn); background:var(--warn-bg)}
@@ -248,6 +260,36 @@ td i{color:var(--ink2); font-style:italic}
   .node{min-height:96px; padding:10px 6px}
   .matchgrid{gap:7px 8px}
 }
+
+/* ---- Transaktions-Labor ---- */
+.node.txlab{grid-column:1/-1; flex-direction:row; justify-content:flex-start; gap:12px; min-height:auto; padding:12px 16px; border-style:dashed; border-color:var(--warn)}
+.node.txlab .nicon{font-size:22px}
+.node.txlab .nlabel{font-size:14.5px}
+.node.txlab .nhint{color:var(--warn)}
+.txlabcard{text-align:left}
+.txlabcard .eyebrow, .txlabcard h2{text-align:center}
+.txlabintro{font-size:14.5px; line-height:1.5; margin:0 0 14px; text-align:center}
+.txlabswitch{display:flex; gap:8px; justify-content:center; margin-bottom:16px; flex-wrap:wrap}
+.chip{appearance:none; cursor:pointer; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:700 13px var(--f-body); padding:7px 14px; border-radius:99px}
+.chip.on{background:var(--warn-bg); border-color:var(--warn); color:var(--warn)}
+.txlabstage{display:grid; grid-template-columns:1fr 1.1fr 1fr; gap:8px; margin-bottom:14px}
+.txsession, .txdb{border:1.5px solid var(--line); border-radius:12px; padding:10px 8px; text-align:center; background:var(--bg); transition:border-color .2s, background .2s}
+.txsession.active{border-color:var(--warn); background:var(--warn-bg)}
+.txdb{background:var(--paper); border-color:var(--ink)}
+.txhead{font:700 11.5px var(--f-mono); color:var(--ink2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.03em}
+.txval{font:800 17px var(--f-mono)}
+.txval.main{font-size:19px}
+.txsql{background:var(--code-bg); color:var(--code-ink); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font:600 12.5px/1.5 var(--f-mono); white-space:pre-wrap; margin:0 0 10px; overflow-x:auto}
+.txnote{font-size:14px; line-height:1.5; margin-bottom:10px}
+.txlabnav{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px}
+.txstepct{font:700 12px var(--f-mono); color:var(--ink2)}
+.txverdict{background:var(--warn-bg); color:var(--warn); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.5; margin-top:8px}
+.txverdict b{color:inherit}
+.txquiz{margin-top:16px}
+.txqtext{font:700 15px/1.4 var(--f-display); margin:0 0 10px}
+@media (max-width:520px){
+  .txlabstage{grid-template-columns:1fr; gap:6px}
+}
 </style>
 <div class="top">
   <div id="hud" class="hud"></div>
@@ -268,7 +310,8 @@ td i{color:var(--ink2); font-style:italic}
 const KEYWORDS = new Set(['SELECT','FROM','WHERE','AND','OR','NOT','AS','JOIN','INNER','LEFT','RIGHT','OUTER',
   'ON','GROUP','BY','HAVING','ORDER','ASC','DESC','LIMIT','DISTINCT','IN','IS','NULL','LIKE','BETWEEN',
   'INSERT','INTO','VALUES','UPDATE','SET','DELETE','CREATE','TABLE','PRIMARY','KEY','FOREIGN','REFERENCES',
-  'NOT','DEFAULT','UNIQUE','TRUE','FALSE','UNION','ALL','EXISTS']);
+  'NOT','DEFAULT','UNIQUE','TRUE','FALSE','UNION','ALL','EXISTS','INTERSECT','EXCEPT','NATURAL','USING',
+  'VIEW','ALTER','ADD','COLUMN','DROP']);
 
 function tokenize(sql){
   const toks = []; let i = 0; const n = sql.length;
@@ -320,6 +363,9 @@ function tokenize(sql){
 
 class SqlError extends Error {}
 
+/* Aktuell laufende DB-Referenz für Subquery-Auswertung (SUBQ/EXISTS/IN-Subquery). */
+let CTX_DB = null;
+
 /* ---------- Parser ---------- */
 class Parser {
   constructor(toks){ this.toks = toks; this.p = 0; }
@@ -332,12 +378,27 @@ class Parser {
   _show(){ const t = this.peek(); return t.t==='eof' ? 'Ende' : JSON.stringify(t.v); }
 
   parseStatement(){
-    if(this.isKw('SELECT')) return this.parseSelect();
+    if(this.isKw('SELECT')) return this.parseSelectStmt();
     if(this.isKw('INSERT')) return this.parseInsert();
     if(this.isKw('UPDATE')) return this.parseUpdate();
     if(this.isKw('DELETE')) return this.parseDelete();
     if(this.isKw('CREATE')) return this.parseCreate();
-    throw new SqlError('Unbekannte Anweisung (erwarte SELECT/INSERT/UPDATE/DELETE/CREATE): '+this._show());
+    if(this.isKw('ALTER')) return this.parseAlter();
+    if(this.isKw('DROP')) return this.parseDrop();
+    throw new SqlError('Unbekannte Anweisung (erwarte SELECT/INSERT/UPDATE/DELETE/CREATE/ALTER/DROP): '+this._show());
+  }
+
+  // SELECT inkl. optionaler UNION/INTERSECT/EXCEPT-Verkettung
+  parseSelectStmt(){
+    let left = this.parseSelectCore();
+    while(this.isKw('UNION') || this.isKw('INTERSECT') || this.isKw('EXCEPT')){
+      const op = this.next().v;
+      let all = false;
+      if(op === 'UNION' && this.isKw('ALL')){ this.next(); all = true; }
+      const right = this.parseSelectCore();
+      left = {type:'setop', op, all, left, right};
+    }
+    return left;
   }
 
   parseIdentPath(){
@@ -355,7 +416,7 @@ class Parser {
     return {type:'col', table:null, col:name};
   }
 
-  parseSelect(){
+  parseSelectCore(){
     this.eatKw('SELECT');
     let distinct = false;
     if(this.isKw('DISTINCT')){ this.next(); distinct = true; }
@@ -367,16 +428,29 @@ class Parser {
     this.eatKw('FROM');
     const from = this.parseTableRef();
     const joins = [];
-    while(this.isKw('JOIN') || this.isKw('INNER') || this.isKw('LEFT') || this.isKw('RIGHT')){
+    while(this.isKw('NATURAL') || this.isKw('JOIN') || this.isKw('INNER') || this.isKw('LEFT') || this.isKw('RIGHT')){
+      let natural = false;
+      if(this.isKw('NATURAL')){ natural = true; this.next(); }
       let jt = 'INNER';
       if(this.isKw('LEFT')){ jt='LEFT'; this.next(); if(this.isKw('OUTER')) this.next(); }
       else if(this.isKw('RIGHT')){ jt='RIGHT'; this.next(); if(this.isKw('OUTER')) this.next(); }
       else if(this.isKw('INNER')){ jt='INNER'; this.next(); }
       this.eatKw('JOIN');
       const tbl = this.parseTableRef();
-      this.eatKw('ON');
-      const on = this.parseExprOr();
-      joins.push({type:jt, table:tbl, on});
+      let on = null, using = null;
+      if(natural){
+        // NATURAL JOIN: keine ON/USING-Klausel
+      } else if(this.isKw('USING')){
+        this.next();
+        this.eatOp('(');
+        using = [];
+        do{ if(this.isOp(',')) this.next(); using.push(this.next().v); } while(this.isOp(','));
+        this.eatOp(')');
+      } else {
+        this.eatKw('ON');
+        on = this.parseExprOr();
+      }
+      joins.push({type:jt, table:tbl, on, using, natural});
     }
     let where = null;
     if(this.isKw('WHERE')){ this.next(); where = this.parseExprOr(); }
@@ -431,6 +505,13 @@ class Parser {
     return this.parsePredicate();
   }
   parsePredicate(){
+    if(this.isKw('EXISTS')){
+      this.next();
+      this.eatOp('(');
+      const sub = this.parseSelectStmt();
+      this.eatOp(')');
+      return {op:'EXISTS', stmt: sub};
+    }
     if(this.isOp('(')){
       // Könnte geklammerter Bool-Ausdruck sein
       const save = this.p;
@@ -470,10 +551,15 @@ class Parser {
   maybeChainAfterParen(inner){ return inner; }
   parseInList(){
     this.eatOp('(');
+    if(this.isKw('SELECT')){
+      const sub = this.parseSelectStmt();
+      this.eatOp(')');
+      return {subq: sub};
+    }
     const items = [];
     do{ if(this.isOp(',')) this.next(); items.push(this.parseAddSub()); } while(this.isOp(','));
     this.eatOp(')');
-    return items;
+    return {list: items};
   }
 
   parseAddSub(){
@@ -507,6 +593,11 @@ class Parser {
     if(this.isKw('FALSE')){ this.next(); return {op:'LIT', v:false}; }
     if(this.isOp('(')){
       this.next();
+      if(this.isKw('SELECT')){
+        const sub = this.parseSelectStmt();
+        this.eatOp(')');
+        return {op:'SUBQ', stmt: sub};
+      }
       const e = this.parseExprOr();
       this.eatOp(')');
       return e;
@@ -585,7 +676,15 @@ class Parser {
   }
 
   parseCreate(){
-    this.eatKw('CREATE'); this.eatKw('TABLE');
+    this.eatKw('CREATE');
+    if(this.isKw('VIEW')){
+      this.next();
+      const name = this.next().v;
+      this.eatKw('AS');
+      const select = this.parseSelectStmt();
+      return {type:'createview', name, select};
+    }
+    this.eatKw('TABLE');
     const table = this.next().v;
     this.eatOp('(');
     const cols = [];
@@ -611,6 +710,30 @@ class Parser {
     this.eatOp(')');
     return {type:'create', table, cols};
   }
+
+  parseAlter(){
+    this.eatKw('ALTER'); this.eatKw('TABLE');
+    const table = this.next().v;
+    this.eatKw('ADD');
+    if(this.isKw('COLUMN')) this.next();
+    const col = this.next().v;
+    let dtype = this.next().v;
+    if(this.isOp('(')){ this.next(); while(!this.isOp(')')) this.next(); this.next(); }
+    let defaultVal = undefined;
+    while(true){
+      if(this.isKw('DEFAULT')){ this.next(); defaultVal = this.parseAddSub(); continue; }
+      if(this.isKw('NOT')){ this.next(); this.eatKw('NULL'); continue; }
+      if(this.isKw('NULL')){ this.next(); continue; }
+      break;
+    }
+    return {type:'alter', table, col, dtype:String(dtype).toUpperCase(), defaultVal};
+  }
+
+  parseDrop(){
+    this.eatKw('DROP'); this.eatKw('TABLE');
+    const table = this.next().v;
+    return {type:'drop', table};
+  }
 }
 
 function parseSQL(sql){
@@ -624,14 +747,26 @@ function parseSQL(sql){
 /* ---------- Evaluator ---------- */
 function cloneDb(db){
   const out = {};
-  for(const k in db) out[k] = db[k].map(r => Object.assign({}, r));
+  for(const k in db){
+    if(k === '__views'){ out.__views = Object.assign({}, db.__views); continue; }
+    out[k] = db[k].map(r => Object.assign({}, r));
+  }
   return out;
 }
 
-function findTable(db, name){
-  const key = Object.keys(db).find(k => k.toUpperCase() === String(name).toUpperCase());
-  if(!key) throw new SqlError('Unbekannte Tabelle: '+name);
-  return {key, rows: db[key]};
+// forWrite=true: Views werden nicht materialisiert, sondern lösen einen Fehler aus (INSERT/UPDATE/DELETE/ALTER/DROP auf Views verboten).
+function findTable(db, name, forWrite){
+  const key = Object.keys(db).find(k => k !== '__views' && k.toUpperCase() === String(name).toUpperCase());
+  if(key) return {key, rows: db[key]};
+  const viewKey = db.__views && Object.keys(db.__views).find(k => k === String(name).toUpperCase());
+  if(viewKey){
+    if(forWrite) throw new SqlError('Views sind nur lesbar (CREATE VIEW): '+name);
+    const res = runSelectStatement(db.__views[viewKey], db, null);
+    if(!res.ok) throw new SqlError('Fehler beim Auswerten der View "'+name+'": '+res.error);
+    const rows = res.rows.map(r => { const o = {}; res.columns.forEach((c,i) => { o[c] = r[i]; }); return o; });
+    return {key:name, rows, isView:true};
+  }
+  throw new SqlError('Unbekannte Tabelle: '+name);
 }
 
 // env: {tableAliasUpper: rowObjectOrNull, ...}, plus __agg for aggregate context
@@ -696,7 +831,24 @@ function evalExpr(e, env){
     case 'IN': {
       const l = evalExpr(e.l, env);
       if(l == null) return null;
-      return e.r.some(x => evalExpr(x, env) == l);
+      if(e.r.subq){
+        const res = runSelectStatement(e.r.subq, CTX_DB, env);
+        if(!res.ok) throw new SqlError('Subquery-Fehler: '+res.error);
+        return res.rows.some(row => row[0] == l);
+      }
+      return e.r.list.some(x => evalExpr(x, env) == l);
+    }
+    case 'SUBQ': {
+      const res = runSelectStatement(e.stmt, CTX_DB, env);
+      if(!res.ok) throw new SqlError('Subquery-Fehler: '+res.error);
+      if(res.type !== 'select') throw new SqlError('Subquery muss ein SELECT sein');
+      if(res.rows.length === 0) return null;
+      return res.rows[0][0];
+    }
+    case 'EXISTS': {
+      const res = runSelectStatement(e.stmt, CTX_DB, env);
+      if(!res.ok) throw new SqlError('Subquery-Fehler: '+res.error);
+      return res.rows.length > 0;
     }
     case 'BETWEEN': {
       const v = evalExpr(e.e, env), lo = evalExpr(e.lo, env), hi = evalExpr(e.hi, env);
@@ -761,29 +913,53 @@ function colLabel(item, idx){
 function makeEnvFromRow(tableKey, row){ const env = {}; env[tableKey] = row; return env; }
 function mergeEnv(a, b){ return Object.assign({}, a, b); }
 
-function runSelect(stmt, db){
+function runSelect(stmt, db, outerEnv){
   const {key: fromKey, rows: fromRows} = findTable(db, stmt.from.name);
   const fromAlias = stmt.from.alias || stmt.from.name;
-  let combined = fromRows.map(r => makeEnvFromRow(fromAlias, r));
+  let combined = fromRows.map(r => outerEnv ? mergeEnv(outerEnv, makeEnvFromRow(fromAlias, r)) : makeEnvFromRow(fromAlias, r));
 
+  let joinedTables = [stmt.from];
   for(const j of stmt.joins){
     const {rows: joinRows} = findTable(db, j.table.name);
     const joinAlias = j.table.alias || j.table.name;
+    let usingCols = j.using;
+    if(j.natural){
+      const joinSample = joinRows[0] || {};
+      const joinColsUp = new Set(Object.keys(joinSample).map(c => c.toUpperCase()));
+      const commonSet = new Set();
+      for(const t of joinedTables){
+        const {rows: tRows} = findTable(db, t.name);
+        const sample = tRows[0] || {};
+        Object.keys(sample).forEach(c => { if(joinColsUp.has(c.toUpperCase())) commonSet.add(c); });
+      }
+      usingCols = [...commonSet];
+    }
     const next = [];
     for(const leftEnv of combined){
       let matched = false;
       for(const r of joinRows){
         const env = mergeEnv(leftEnv, makeEnvFromRow(joinAlias, r));
         let ok;
-        try{ ok = evalExpr(j.on, env); } catch(err){ ok = false; }
+        try{
+          if(usingCols && usingCols.length){
+            ok = usingCols.every(colName => {
+              const lv = resolveCol(leftEnv, null, colName);
+              const rk = Object.keys(r).find(k => k.toUpperCase() === colName.toUpperCase());
+              const rv = rk ? r[rk] : null;
+              return lv != null && rv != null && lv == rv;
+            });
+          } else {
+            ok = evalExpr(j.on, env);
+          }
+        } catch(err){ ok = false; }
         if(ok){ matched = true; next.push(env); }
       }
       if(!matched && j.type === 'LEFT'){
-        const nullRow = {}; // alle Spaltennamen unbekannt -> resolveCol gibt null zurück, da env[alias]=null
         next.push(mergeEnv(leftEnv, {[joinAlias]: null}));
       }
     }
     combined = next;
+    joinedTables.push(j.table);
   }
 
   if(stmt.where){
@@ -925,6 +1101,42 @@ function runSelect(stmt, db){
   return {ok:true, type:'select', columns, rows: outRows};
 }
 
+// Dispatcher: normales SELECT oder UNION/INTERSECT/EXCEPT-Verkettung; outerEnv erlaubt korrelierte Subqueries.
+function runSelectStatement(stmt, db, outerEnv){
+  if(stmt.type === 'setop') return runSetOp(stmt, db, outerEnv);
+  return runSelect(stmt, db, outerEnv);
+}
+
+function runSetOp(stmt, db, outerEnv){
+  const l = runSelectStatement(stmt.left, db, outerEnv);
+  if(!l.ok) return l;
+  const r = runSelectStatement(stmt.right, db, outerEnv);
+  if(!r.ok) return r;
+  if(l.columns.length !== r.columns.length){
+    return {ok:false, error:(stmt.op)+': beide SELECTs müssen dieselbe Anzahl Spalten haben'};
+  }
+  const na = l.rows.map(row => row.map(normVal));
+  const nb = r.rows.map(row => row.map(normVal));
+  let outNorm;
+  if(stmt.op === 'UNION'){
+    outNorm = na.concat(nb);
+    if(!stmt.all){
+      const seen = new Set(); const uniq = [];
+      for(const row of outNorm){ const k = JSON.stringify(row); if(!seen.has(k)){ seen.add(k); uniq.push(row); } }
+      outNorm = uniq;
+    }
+  } else if(stmt.op === 'INTERSECT'){
+    const setB = new Set(nb.map(row => JSON.stringify(row)));
+    const seen = new Set(); outNorm = [];
+    for(const row of na){ const k = JSON.stringify(row); if(setB.has(k) && !seen.has(k)){ seen.add(k); outNorm.push(row); } }
+  } else { // EXCEPT
+    const setB = new Set(nb.map(row => JSON.stringify(row)));
+    const seen = new Set(); outNorm = [];
+    for(const row of na){ const k = JSON.stringify(row); if(!setB.has(k) && !seen.has(k)){ seen.add(k); outNorm.push(row); } }
+  }
+  return {ok:true, type:'select', columns: l.columns, rows: outNorm};
+}
+
 function evalArithWithAgg(e, rows){
   if(e.op === 'FUNC' && AGG_FUNCS.has(e.name)) return evalAgg(e, rows);
   if(e.op === 'ARITH'){
@@ -962,7 +1174,7 @@ function rowSampleFor(stmt, db, alias){
 }
 
 function runInsert(stmt, db){
-  const {key} = findTable(db, stmt.table);
+  const {key} = findTable(db, stmt.table, true);
   const existing = db[key];
   const template = existing[0] || {};
   const allCols = stmt.cols || Object.keys(template);
@@ -978,7 +1190,7 @@ function runInsert(stmt, db){
 }
 
 function runUpdate(stmt, db){
-  const {key} = findTable(db, stmt.table);
+  const {key} = findTable(db, stmt.table, true);
   const rows = db[key];
   let affected = 0;
   for(const row of rows){
@@ -997,7 +1209,7 @@ function runUpdate(stmt, db){
 }
 
 function runDelete(stmt, db){
-  const {key} = findTable(db, stmt.table);
+  const {key} = findTable(db, stmt.table, true);
   const rows = db[key];
   const kept = [];
   let affected = 0;
@@ -1012,28 +1224,62 @@ function runDelete(stmt, db){
 }
 
 function runCreate(stmt, db){
-  const exists = Object.keys(db).some(k => k.toUpperCase() === stmt.table.toUpperCase());
+  const exists = Object.keys(db).some(k => k !== '__views' && k.toUpperCase() === stmt.table.toUpperCase())
+    || (db.__views && Object.keys(db.__views).some(k => k === stmt.table.toUpperCase()));
   if(exists) throw new SqlError('Tabelle existiert bereits: '+stmt.table);
   db[stmt.table] = [];
   return {ok:true, type:'create', table: stmt.table, columns: stmt.cols, db};
 }
 
+function runCreateView(stmt, db){
+  db.__views = db.__views || {};
+  const upName = stmt.name.toUpperCase();
+  const exists = Object.keys(db).some(k => k !== '__views' && k.toUpperCase() === upName) || db.__views[upName];
+  if(exists) throw new SqlError('Name bereits vergeben: '+stmt.name);
+  db.__views[upName] = stmt.select;
+  return {ok:true, type:'createview', name: stmt.name, db};
+}
+
+function runAlter(stmt, db){
+  const {rows} = findTable(db, stmt.table, true);
+  const already = rows[0] && Object.keys(rows[0]).some(k => k.toUpperCase() === stmt.col.toUpperCase());
+  if(already) throw new SqlError('Spalte existiert bereits: '+stmt.col);
+  const defVal = stmt.defaultVal !== undefined ? evalExpr(stmt.defaultVal, {}) : null;
+  rows.forEach(r => { r[stmt.col] = defVal; });
+  return {ok:true, type:'alter', table: stmt.table, col: stmt.col, affected: rows.length, db};
+}
+
+function runDrop(stmt, db){
+  const {key} = findTable(db, stmt.table, true);
+  delete db[key];
+  return {ok:true, type:'drop', table: stmt.table, db};
+}
+
 function run(sql, db, opts){
   opts = opts || {};
   const workDb = opts.mutate ? db : cloneDb(db);
+  const prevCtx = CTX_DB;
+  CTX_DB = workDb;
   try{
     const stmt = parseSQL(sql);
     let res;
-    if(stmt.type === 'select') res = runSelect(stmt, workDb);
+    if(stmt.type === 'select') res = runSelect(stmt, workDb, null);
+    else if(stmt.type === 'setop') res = runSetOp(stmt, workDb, null);
     else if(stmt.type === 'insert') res = runInsert(stmt, workDb);
     else if(stmt.type === 'update') res = runUpdate(stmt, workDb);
     else if(stmt.type === 'delete') res = runDelete(stmt, workDb);
     else if(stmt.type === 'create') res = runCreate(stmt, workDb);
+    else if(stmt.type === 'createview') res = runCreateView(stmt, workDb);
+    else if(stmt.type === 'alter') res = runAlter(stmt, workDb);
+    else if(stmt.type === 'drop') res = runDrop(stmt, workDb);
+    else throw new SqlError('Nicht unterstützte Anweisung');
     res.stmt = stmt;
     res.dbAfter = workDb;
     return res;
   } catch(err){
     return {ok:false, error: (err && err.message) || String(err)};
+  } finally {
+    CTX_DB = prevCtx;
   }
 }
 
@@ -1121,6 +1367,15 @@ const SQL_CHEATSHEET = [
   {t:'Neue Zeile einfügen', c:"INSERT INTO TABELLE (spalte1, spalte2)\nVALUES (wert1, wert2)"},
   {t:'Werte ändern', c:"UPDATE TABELLE\nSET spalte = neuerWert\nWHERE bedingung   -- sonst ändert sich ALLES!"},
   {t:'Zeilen löschen', c:"DELETE FROM TABELLE\nWHERE bedingung   -- sonst wird ALLES gelöscht!"},
+  {t:'Ergebnisse vereinen', c:"SELECT spalte FROM A\nUNION\nSELECT spalte FROM B   -- entfernt Duplikate"},
+  {t:'Alles behalten', c:"... UNION ALL ...   -- wie UNION, aber MIT Duplikaten"},
+  {t:'Schnittmenge / Differenz', c:"SELECT x FROM A INTERSECT SELECT x FROM B\nSELECT x FROM A EXCEPT SELECT x FROM B"},
+  {t:'Join über gleiche Spalte', c:"FROM A JOIN B USING(gemeinsame_spalte)\n-- oder: FROM A NATURAL JOIN B"},
+  {t:'Verschachtelte Abfrage (Skalar)', c:"WHERE preis > (SELECT AVG(preis) FROM ARTIKEL)"},
+  {t:'IN mit Subquery', c:"WHERE kunde_id IN (SELECT kunde_id FROM BESTELLUNG)"},
+  {t:'EXISTS / NOT EXISTS', c:"WHERE EXISTS (SELECT 1 FROM B WHERE b.a_id = a.id)\n-- prüft nur: gibt es Treffer?"},
+  {t:'Gespeicherte Sicht (View)', c:"CREATE VIEW NAME AS\nSELECT ... FROM ...   -- nur lesbar, wie eine gespeicherte Abfrage"},
+  {t:'Tabelle ändern/löschen', c:"ALTER TABLE T ADD COLUMN spalte TYP\nDROP TABLE T"},
 ];
 
 /* ---------- SQL-Werkstatt Aufgaben ---------- */
@@ -1157,6 +1412,33 @@ const SQL_TASKS_W5 = [
   {id:'s10', diff:3, type:'select', prompt:'Zeige <b>name</b> (KUNDE) und <b>bestellung_id</b> für <b>alle</b> Kund*innen — auch jene ohne Bestellung (dann NULL bei bestellung_id).',
     sol:"SELECT k.name, b.bestellung_id FROM KUNDE k LEFT JOIN BESTELLUNG b ON k.kunde_id = b.kunde_id",
     hints:["Ein normaler JOIN würde Kund*innen ohne Bestellung weglassen.", "LEFT JOIN KUNDE → BESTELLUNG behält alle Kund*innen."]},
+  {id:'s11', diff:2, type:'select', prompt:'Zeige <b>name</b> aller Kund*innen, die entweder aus <b>Graz</b> kommen <b>oder</b> mindestens eine <b>offene</b> Bestellung haben — jeder Name nur einmal (nutze <b>UNION</b>).',
+    sol:"SELECT name FROM KUNDE WHERE ort = 'Graz' UNION SELECT k.name FROM KUNDE k JOIN BESTELLUNG b ON k.kunde_id = b.kunde_id WHERE b.status = 'offen'",
+    hints:["Zwei separate SELECTs, verbunden mit UNION.", "UNION entfernt automatisch doppelte Zeilen (z.B. wenn jemand beide Bedingungen erfüllt)."]},
+  {id:'s12', diff:2, type:'select', prompt:'Zeige <b>name</b> aller Kund*innen, die <b>mindestens eine</b> Bestellung aufgegeben haben. Nutze dafür eine <b>Subquery mit IN</b> (kein JOIN).',
+    sol:"SELECT name FROM KUNDE WHERE kunde_id IN (SELECT kunde_id FROM BESTELLUNG)",
+    hints:["WHERE kunde_id IN (SELECT kunde_id FROM BESTELLUNG)", "Die Subquery in Klammern liefert alle kunde_id, die in BESTELLUNG vorkommen."]},
+  {id:'s13', diff:3, type:'select', prompt:'Zeige <b>name</b> aller Kund*innen, die <b>noch keine</b> Bestellung aufgegeben haben. Nutze <b>NOT EXISTS</b> mit einer korrelierten Subquery.',
+    sol:"SELECT name FROM KUNDE k WHERE NOT EXISTS (SELECT 1 FROM BESTELLUNG b WHERE b.kunde_id = k.kunde_id)",
+    hints:["NOT EXISTS (SELECT 1 FROM BESTELLUNG b WHERE b.kunde_id = k.kunde_id)", "Die innere Abfrage bezieht sich auf die äußere Zeile (k.kunde_id) — das macht sie 'korreliert'."]},
+  {id:'s14', diff:3, type:'select', prompt:'Zeige <b>bezeichnung</b> und <b>preis</b> aller Artikel, die <b>teurer als der Durchschnittspreis</b> aller Artikel sind. Nutze eine <b>skalare Subquery</b>.',
+    sol:"SELECT bezeichnung, preis FROM ARTIKEL WHERE preis > (SELECT AVG(preis) FROM ARTIKEL)",
+    hints:["(SELECT AVG(preis) FROM ARTIKEL) liefert genau einen Wert — eine 'skalare' Subquery.", "WHERE preis > (SELECT AVG(preis) FROM ARTIKEL)"]},
+  {id:'s15', diff:2, type:'select', prompt:'Zeige alle <b>kunde_id</b>, die <b>keine</b> Bestellung haben. Nutze <b>EXCEPT</b> (Menge aller Kund*innen minus Menge der bestellenden Kund*innen).',
+    sol:"SELECT kunde_id FROM KUNDE EXCEPT SELECT kunde_id FROM BESTELLUNG",
+    hints:["EXCEPT liefert alles aus der ersten Abfrage, was NICHT auch in der zweiten vorkommt.", "SELECT kunde_id FROM KUNDE EXCEPT SELECT kunde_id FROM BESTELLUNG"]},
+  {id:'s16', diff:3, type:'createview', viewName:'OFFENE_BESTELLUNGEN', prompt:'Erstelle eine <b>View</b> namens <b>OFFENE_BESTELLUNGEN</b>, die <b>name</b> (KUNDE) und <b>datum</b> (BESTELLUNG) aller Bestellungen mit Status <b>\'offen\'</b> zeigt.',
+    sol:"CREATE VIEW OFFENE_BESTELLUNGEN AS SELECT k.name, b.datum FROM KUNDE k JOIN BESTELLUNG b ON k.kunde_id = b.kunde_id WHERE b.status = 'offen'",
+    hints:["CREATE VIEW NAME AS SELECT ...", "Die View speichert keine Daten, sondern die Abfrage selbst — bei jedem Zugriff neu berechnet."]},
+  {id:'s17', diff:2, type:'write', table:'ARTIKEL', prompt:'Füge der Tabelle <b>ARTIKEL</b> eine neue Spalte <b>hersteller</b> (VARCHAR) mit Standardwert <b>\'unbekannt\'</b> hinzu.',
+    sol:"ALTER TABLE ARTIKEL ADD COLUMN hersteller VARCHAR(50) DEFAULT 'unbekannt'",
+    hints:["ALTER TABLE ARTIKEL ADD COLUMN hersteller VARCHAR(50) DEFAULT 'unbekannt'", "DEFAULT setzt den Wert für alle bereits vorhandenen Zeilen."]},
+  {id:'s18', diff:2, type:'select', prompt:'Zeige <b>bestellung_id</b> und <b>artikel_id</b> aller Bestellpositionen — nutze diesmal <b>JOIN ... USING</b> statt ON (beide Tabellen haben die Spalte bestellung_id gemeinsam).',
+    sol:"SELECT bestellung_id, artikel_id FROM BESTELLUNG JOIN BESTELLPOSITION USING(bestellung_id)",
+    hints:["FROM BESTELLUNG JOIN BESTELLPOSITION USING(bestellung_id)", "USING(spalte) funktioniert nur, wenn beide Tabellen die Spalte gleich benennen — dann kein a.spalte = b.spalte nötig."]},
+  {id:'s19', diff:1, type:'drop', table:'BESTELLPOSITION', prompt:'Die Tabelle <b>BESTELLPOSITION</b> wird nicht mehr gebraucht — <b>lösche</b> die ganze Tabelle (nicht nur die Zeilen!).',
+    sol:"DROP TABLE BESTELLPOSITION",
+    hints:["DELETE löscht nur Zeilen — die Tabelle selbst bleibt.", "DROP TABLE BESTELLPOSITION entfernt die ganze Tabelle inklusive Struktur."]},
 ];
 
 const SQL_TASKS_W6 = [
@@ -1416,6 +1698,7 @@ const DEFAULT_STATE = () => ({
   progress: {}, // {w1:{quiz:{done,stars,best}, skill:{...}, boss:{...}}}
   examBest: null,
   weak: {}, // {w1:{ok:0,total:0}}
+  missed: {quiz:{}, sql:{}}, // {quiz:{'w1::Frage-Text':true}, sql:{'w5::s3':true}}
 });
 
 let S = Store.get('sqla:state', null) || DEFAULT_STATE();
@@ -1466,6 +1749,57 @@ function worldStars(worldId){
   const p = S.progress[worldId];
   if(!p) return 0;
   return (p.quiz?.stars||0) + (p.skill?.stars||0) + (p.boss?.stars||0);
+}
+
+/* ---------- Wiederholungs-/Lernmodus: merkt sich falsch beantwortete Fragen/Aufgaben ---------- */
+function noteMissed(kind, worldId, key){
+  if(!S.missed) S.missed = {quiz:{}, sql:{}};
+  if(!S.missed[kind]) S.missed[kind] = {};
+  S.missed[kind][worldId+'::'+key] = true;
+  saveState();
+}
+function clearMissed(kind, worldId, key){
+  if(S.missed && S.missed[kind]) delete S.missed[kind][worldId+'::'+key];
+  saveState();
+}
+function missedKeys(kind){
+  if(!S.missed || !S.missed[kind]) return [];
+  return Object.keys(S.missed[kind]).map(k => {
+    const i = k.indexOf('::');
+    return {worldId: k.slice(0,i), key: k.slice(i+2)};
+  });
+}
+function missedCount(){ return missedKeys('quiz').length + missedKeys('sql').length; }
+function buildReviewQuizPool(){
+  const out = [];
+  missedKeys('quiz').forEach(({worldId, key}) => {
+    const pools = [QUIZ[worldId]||[], BOSS[worldId]||[]];
+    for(const pool of pools){
+      const hit = pool.find(q => q.q === key);
+      if(hit){ out.push(Object.assign({}, hit, {_srcWorld: worldId})); break; }
+    }
+  });
+  return out;
+}
+function buildReviewSqlTasks(){
+  const out = [];
+  missedKeys('sql').forEach(({worldId, key}) => {
+    const pool = worldId === 'w5' ? SQL_TASKS_W5 : SQL_TASKS_W6;
+    const hit = pool.find(t => t.id === key);
+    if(hit) out.push(Object.assign({}, hit, {_srcWorld: worldId}));
+  });
+  return out;
+}
+const REVIEW_WORLD = {id:'review', n:'', title:'Wiederholung', sub:'Nur deine bisherigen Fehler', icon:'🔁', color:'k', skillType:'match'};
+function startReviewQuiz(){
+  const pool = buildReviewQuizPool();
+  if(!pool.length){ toast('Keine offenen Wiederholungen 🎉', 'ok'); return; }
+  nav(el2 => StageQuiz.render(el2, REVIEW_WORLD, {pool, count: pool.length, timeLimit:35, lives: pool.length+2, stageKey:'review', xpPer:8, coinPer:2}));
+}
+function startReviewSql(){
+  const tasks = buildReviewSqlTasks();
+  if(!tasks.length){ toast('Keine offenen Wiederholungen 🎉', 'ok'); return; }
+  nav(el2 => StageSql.render(el2, REVIEW_WORLD, {tasks}));
 }
 
 /* ---------- Navigation / Screen-Root ---------- */
@@ -1551,6 +1885,7 @@ function renderMap(el){
         <div><b>${S.bestStreak}</b><span>beste Serie</span></div>
       </div>
     </section>
+    ${reviewCardHtml()}
     <div class="path">
   `;
   WORLDS.forEach((w, wi) => {
@@ -1577,6 +1912,13 @@ function renderMap(el){
         ${prog.done ? starsHtml(prog.stars,3) : (unlocked ? '<span class="nhint">'+esc(st.desc)+'</span>' : '<span class="nhint">Gesperrt</span>')}
       </button>`;
     });
+    if(w.id === 'w6'){
+      html += `<button class="node txlab ready" id="txlabBtn">
+        <span class="nicon">🧪</span>
+        <span class="nlabel">Transaktions-Labor</span>
+        <span class="nhint">Bonus · jederzeit spielbar</span>
+      </button>`;
+    }
     html += `</div></div>`;
   });
   const examUnlocked = isExamUnlocked();
@@ -1606,10 +1948,34 @@ function renderMap(el){
   });
   const examBtn = wrap.querySelector('#examBtn');
   if(examBtn) examBtn.addEventListener('click', () => nav(renderExamIntro));
+  const txlabBtn = wrap.querySelector('#txlabBtn');
+  if(txlabBtn) txlabBtn.addEventListener('click', () => nav(el2 => TxLab.render(el2)));
+  const reviewQuizBtn = wrap.querySelector('#reviewQuizBtn');
+  if(reviewQuizBtn) reviewQuizBtn.addEventListener('click', startReviewQuiz);
+  const reviewSqlBtn = wrap.querySelector('#reviewSqlBtn');
+  if(reviewSqlBtn) reviewSqlBtn.addEventListener('click', startReviewSql);
 
   // Autoscroll zum aktuellen (nächsten offenen) Knoten
   const nextNode = wrap.querySelector('.node.ready') || wrap.querySelector('.node.done');
   if(nextNode){ setTimeout(()=> nextNode.scrollIntoView({block:'center', behavior:'instant'}), 30); }
+}
+
+function reviewCardHtml(){
+  const qn = missedKeys('quiz').length, sn = missedKeys('sql').length;
+  if(qn===0 && sn===0){
+    return `<section class="reviewcard reviewcard-empty">
+      <span class="wicon">✅</span>
+      <div><h3>Alles im grünen Bereich!</h3><p>Noch keine offenen Wiederholungen — falsch beantwortete Fragen landen automatisch hier.</p></div>
+    </section>`;
+  }
+  return `<section class="reviewcard">
+    <span class="wicon">🔁</span>
+    <div class="reviewtxt"><h3>Wiederholungsmodus</h3><p>Übe gezielt, was bisher noch nicht saß.</p></div>
+    <div class="reviewbtns">
+      ${qn>0 ? `<button class="btn warnbtn" id="reviewQuizBtn">🔁 ${qn} Frage${qn===1?'':'n'} wiederholen</button>` : ''}
+      ${sn>0 ? `<button class="btn warnbtn" id="reviewSqlBtn">🔁 ${sn} SQL-Aufgabe${sn===1?'':'n'} wiederholen</button>` : ''}
+    </div>
+  </section>`;
 }
 
 function totalStars(){
@@ -1654,6 +2020,7 @@ const Engine = {
   Store, shuffle, pick, esc, fmtNum, S, saveState, level, xpIntoLevel, addXp, addCoins, noteStreak, noteWeak,
   stageProg, completeStage, isStageUnlocked, isExamUnlocked, worldStars, totalStars,
   nav, root, renderHud, toast, confettiBurst, starsHtml, openStage,
+  noteMissed, clearMissed, missedCount, startReviewQuiz, startReviewSql,
 };
 /* ============================================================
    Stage: Quiz-Sprint / Boss — schnelle Multiple-Choice-Runde
@@ -1662,7 +2029,7 @@ const StageQuiz = (() => {
   function render(el, world, cfg){
     const items = shuffle(cfg.pool).slice(0, Math.min(cfg.count, cfg.pool.length)).map(q => {
       const order = shuffle(q.o.map((_,i)=>i));
-      return {q: q.q, o: order.map(i=>q.o[i]), c: order.indexOf(q.c), e: q.e};
+      return {q: q.q, o: order.map(i=>q.o[i]), c: order.indexOf(q.c), e: q.e, _srcWorld: q._srcWorld || world.id};
     });
     let idx = 0, lives = cfg.lives, correct = 0, streak = 0, xpGain = 0, coinGain = 0, timer = null, timeLeft = 0, answered = false;
 
@@ -1734,6 +2101,8 @@ const StageQuiz = (() => {
         lives--; streak = 0;
       }
       noteWeak(world.id, ok);
+      const srcW = it._srcWorld || world.id;
+      if(ok) clearMissed('quiz', srcW, it.q); else noteMissed('quiz', srcW, it.q);
       const expl = document.createElement('div');
       expl.className = 'expl ' + (ok?'ok':'no');
       expl.innerHTML = `<b>${ok?'Richtig!':(i===-1?'Zeit abgelaufen.':'Nicht ganz.')}</b> ${esc(it.e||'')}
@@ -2072,11 +2441,23 @@ const StageSql = (() => {
       if(t.type === 'select'){
         out.innerHTML = renderTable(userRes.columns, userRes.rows);
         ok = SQLEngine.compareResults(userRes, solRes, !!t.orderMatters);
+      } else if(t.type === 'createview'){
+        const checkSql = 'SELECT * FROM ' + t.viewName;
+        const uv = SQLEngine.run(checkSql, userDb, {mutate:true});
+        const sv = SQLEngine.run(checkSql, solDb, {mutate:true});
+        out.innerHTML = uv.ok ? renderTable(uv.columns, uv.rows) : `<p class="sqlmsg err">⚠️ Fehler: ${esc(uv.error)}</p>`;
+        ok = !!(uv.ok && sv.ok && SQLEngine.compareResults(uv, sv, false));
+      } else if(t.type === 'drop'){
+        const gone = !Object.keys(userDb).some(k => k.toUpperCase() === t.table.toUpperCase());
+        out.innerHTML = `<p class="sqlmsg">${gone ? 'Tabelle wurde entfernt.' : 'Tabelle existiert noch.'}</p>`;
+        ok = gone;
       } else {
         out.innerHTML = `<p class="sqlmsg">${userRes.affected} Zeile(n) betroffen.</p>` + renderTable(Object.keys(userDb[t.table][0]||userDb[t.table]||{}), (userDb[t.table]||[]).slice(0,8).map(r=>Object.values(r)));
         ok = compareTableRows(userDb[t.table], solDb[t.table]);
       }
       noteWeak(world.id, ok);
+      const srcW = world.id === 'review' ? (t._srcWorld || world.id) : world.id;
+      if(ok) clearMissed('sql', srcW, t.id); else noteMissed('sql', srcW, t.id);
       if(ok) onCorrect(); else onWrong();
     }
 
@@ -2151,6 +2532,146 @@ const StageSql = (() => {
   return {render};
 })();
 const Engine_lastDraft = {};
+/* ============================================================
+   Transaktions-Labor — interaktive Schritt-für-Schritt-Simulation
+   von Nebenläufigkeitsproblemen (Lost Update, Dirty Read).
+   Bonus-Tool, unabhängig vom Fortschrittssystem.
+   ============================================================ */
+const TX_SCENARIOS = {
+  lost: {
+    title: 'Lost Update (verlorene Änderung)',
+    intro: 'Konto <b>KTO-1</b> hat einen Kontostand von <b>1000&nbsp;€</b>. Zwei Sitzungen (A und B) arbeiten gleichzeitig damit — <b>ohne</b> dass eine auf die andere wartet.',
+    start: 1000,
+    steps: [
+      {who:null, sql:null, note:'Ausgangslage: Kontostand in der Datenbank = <b>1000&nbsp;€</b>.', a:null, b:null, db:1000},
+      {who:'A', sql:'BEGIN TRANSACTION;\nSELECT kontostand FROM KONTO WHERE id=1;', note:'Sitzung A startet eine Transaktion und liest den Kontostand: <b>1000&nbsp;€</b>.', a:1000, b:null, db:1000},
+      {who:'B', sql:'BEGIN TRANSACTION;\nSELECT kontostand FROM KONTO WHERE id=1;', note:'Gleichzeitig startet Sitzung B ebenfalls eine Transaktion und liest denselben Wert: <b>1000&nbsp;€</b>.', a:1000, b:1000, db:1000},
+      {who:'A', sql:'UPDATE KONTO SET kontostand = 1000 - 200\nWHERE id=1;   -- Abhebung', note:'Sitzung A hebt 200&nbsp;€ ab und rechnet lokal: 1000 − 200 = <b>800&nbsp;€</b> (noch nicht gespeichert).', a:800, b:1000, db:1000},
+      {who:'A', sql:'COMMIT;', note:'Sitzung A bestätigt (COMMIT). Die Datenbank zeigt jetzt <b>800&nbsp;€</b>.', a:800, b:1000, db:800},
+      {who:'B', sql:'UPDATE KONTO SET kontostand = 1000 + 500\nWHERE id=1;   -- Einzahlung', note:'Sitzung B zahlt 500&nbsp;€ ein — rechnet aber mit ihrem <b>alten</b> gelesenen Wert: 1000 + 500 = <b>1500&nbsp;€</b>. Von Sitzung A weiß B nichts!', a:800, b:1500, db:800},
+      {who:'B', sql:'COMMIT;', note:'Sitzung B bestätigt (COMMIT). Die Datenbank zeigt jetzt <b>1500&nbsp;€</b> — die Abhebung von A (−200&nbsp;€) ist spurlos verschwunden! ⚠️', a:800, b:1500, db:1500},
+    ],
+    verdict: 'Richtig wäre <b>1300&nbsp;€</b> gewesen (1000 − 200 + 500). Stattdessen zeigt die Datenbank 1500&nbsp;€ — Sitzung B hat auf einem veralteten Wert aufgebaut und Sitzung A\'s Änderung überschrieben. Das ist ein <b>Lost Update</b>.',
+    quiz: {
+      q: 'Wie hätte man dieses Lost Update verhindern können?',
+      o: ['Durch striktere Sperren (Locking) oder eine höhere Isolationsstufe, sodass B erst nach dem COMMIT von A lesen/schreiben darf', 'Indem man COMMIT ganz weglässt', 'Indem beide Sitzungen denselben Tabellennamen benutzen', 'Das lässt sich grundsätzlich nicht verhindern'],
+      c: 0,
+      e: 'Mit Locking (z.B. SELECT ... FOR UPDATE) oder einer höheren Isolationsstufe (z.B. SERIALIZABLE) hätte B warten müssen, bis A fertig ist — und dann mit dem aktuellen Stand (800&nbsp;€) weitergerechnet.'
+    }
+  },
+  dirty: {
+    title: 'Dirty Read (Lesen ungültiger Daten)',
+    intro: 'Konto <b>KTO-2</b> hat einen Kontostand von <b>500&nbsp;€</b>. Sitzung A ändert etwas, entscheidet sich dann aber um.',
+    start: 500,
+    steps: [
+      {who:null, sql:null, note:'Ausgangslage: Kontostand in der Datenbank = <b>500&nbsp;€</b>.', a:null, b:null, db:500},
+      {who:'A', sql:'BEGIN TRANSACTION;\nUPDATE KONTO SET kontostand = 500 + 1000\nWHERE id=2;   -- noch nicht committed!', note:'Sitzung A schreibt (noch ohne COMMIT!) einen neuen, <b>nicht bestätigten</b> Wert: <b>1500&nbsp;€</b>.', a:1500, b:null, db:500},
+      {who:'B', sql:'SELECT kontostand FROM KONTO WHERE id=2;', note:'Sitzung B liest — bei niedriger Isolationsstufe (READ UNCOMMITTED) sieht B bereits den <b>unbestätigten</b> Wert von A: <b>1500&nbsp;€</b>! ⚠️', a:1500, b:1500, db:500},
+      {who:'A', sql:'ROLLBACK;', note:'Sitzung A macht die Änderung rückgängig (ROLLBACK). Die Datenbank bleibt bei <b>500&nbsp;€</b> — B hat also mit Daten gearbeitet, die es nie wirklich gab!', a:500, b:1500, db:500},
+    ],
+    verdict: 'Sitzung B hat einen Wert (1500&nbsp;€) gelesen, der nie tatsächlich bestätigt wurde — Sitzung A hat ihn per ROLLBACK verworfen. B hat auf Basis von "schmutzigen", ungültigen Daten weitergearbeitet. Das ist ein <b>Dirty Read</b>.',
+    quiz: {
+      q: 'Welche Isolationsstufe verhindert Dirty Reads zuverlässig?',
+      o: ['READ COMMITTED (oder höher) — liest nur bestätigte (committed) Daten', 'READ UNCOMMITTED — liest auch unbestätigte Daten', 'Gar keine, COMMIT ist dafür nicht relevant', 'Nur NoSQL-Datenbanken verhindern das'],
+      c: 0,
+      e: 'READ UNCOMMITTED erlaubt Dirty Reads ausdrücklich. Ab READ COMMITTED sieht eine Sitzung nur noch Daten, die bereits committed wurden.'
+    }
+  }
+};
+
+const TxLab = {
+  render(el){
+    const wrap = document.createElement('div');
+    wrap.className = 'introwrap txlabwrap';
+    el.appendChild(wrap);
+    let scenarioKey = 'lost';
+    let stepIdx = 0;
+    let answered = false;
+
+    function paint(){
+      const sc = TX_SCENARIOS[scenarioKey];
+      const step = sc.steps[stepIdx];
+      const isLast = stepIdx === sc.steps.length - 1;
+      wrap.innerHTML = `
+        <button class="backlnk" id="back">← Weltkarte</button>
+        <div class="introcard g-warn txlabcard">
+          <span class="wicon big">🧪</span>
+          <p class="eyebrow">Bonus · Transaktions-Labor</p>
+          <h2>${esc(sc.title)}</h2>
+          <p class="txlabintro">${sc.intro}</p>
+
+          <div class="txlabswitch">
+            <button class="chip ${scenarioKey==='lost'?'on':''}" data-sc="lost">Lost Update</button>
+            <button class="chip ${scenarioKey==='dirty'?'on':''}" data-sc="dirty">Dirty Read</button>
+          </div>
+
+          <div class="txlabstage">
+            <div class="txsession ${step.who==='A'?'active':''}">
+              <div class="txhead">Sitzung A</div>
+              <div class="txval">${step.a==null?'—':fmtNum(step.a)+' €'}</div>
+            </div>
+            <div class="txdb">
+              <div class="txhead">Datenbank (gespeichert)</div>
+              <div class="txval main">${fmtNum(step.db)} €</div>
+            </div>
+            <div class="txsession ${step.who==='B'?'active':''}">
+              <div class="txhead">Sitzung B</div>
+              <div class="txval">${step.b==null?'—':fmtNum(step.b)+' €'}</div>
+            </div>
+          </div>
+
+          ${step.sql ? `<pre class="txsql">${esc(step.sql)}</pre>` : ''}
+          <div class="txnote">${step.note}</div>
+
+          <div class="txlabnav">
+            <span class="txstepct">Schritt ${stepIdx+1}/${sc.steps.length}</span>
+            ${isLast ? '' : '<button class="btn primary" id="txNext">Weiter →</button>'}
+          </div>
+
+          ${isLast ? `<div class="txverdict"><b>Was ist passiert?</b> ${sc.verdict}</div>
+            <div class="txquiz" id="txquiz"></div>` : ''}
+        </div>
+      `;
+      wrap.querySelector('#back').onclick = () => nav(renderMap);
+      wrap.querySelectorAll('[data-sc]').forEach(b => b.onclick = () => {
+        scenarioKey = b.getAttribute('data-sc');
+        stepIdx = 0; answered = false;
+        paint();
+      });
+      const nextBtn = wrap.querySelector('#txNext');
+      if(nextBtn) nextBtn.onclick = () => { stepIdx++; paint(); };
+      if(isLast) paintQuiz();
+    }
+
+    function paintQuiz(){
+      const sc = TX_SCENARIOS[scenarioKey];
+      const q = sc.quiz;
+      const box = wrap.querySelector('#txquiz');
+      if(!box) return;
+      box.innerHTML = `<p class="txqtext">${esc(q.q)}</p>` +
+        q.o.map((opt,i) => `<button class="opt" data-i="${i}">${esc(opt)}</button>`).join('') +
+        `<div class="txqfeedback"></div>`;
+      box.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+        if(answered) return;
+        answered = true;
+        const i = +b.getAttribute('data-i');
+        const ok = i === q.c;
+        box.querySelectorAll('.opt').forEach((o,oi) => {
+          o.classList.add(oi===q.c ? 'correct' : (oi===i ? 'wrong' : 'dim'));
+          o.disabled = true;
+        });
+        box.querySelector('.txqfeedback').innerHTML = `<div class="expl ${ok?'ok':'no'}"><b>${ok?'Richtig!':'Nicht ganz.'}</b> ${q.e}
+          <div class="nextrow"><button class="btn" id="txRetry">🔁 Nochmal</button> <button class="btn primary" id="txDone">Zur Karte →</button></div>
+        </div>`;
+        if(ok && !S.txlabBonus){ S.txlabBonus = true; addXp(10); addCoins(3); toast('Bonus: +10 XP, +3 🪙', 'ok'); }
+        box.querySelector('#txRetry').onclick = () => { stepIdx = 0; answered = false; paint(); };
+        box.querySelector('#txDone').onclick = () => nav(renderMap);
+      });
+    }
+
+    paint();
+  }
+};
 /* ============================================================
    Finale: Prüfungsarena — gemischter, zeitbasierter Prüfungssimulator
    ============================================================ */
@@ -2283,8 +2804,17 @@ const StageExam = (() => {
         if(ur.ok){
           const solDb = SQLEngine.cloneDb(SEED_DB);
           const sr = SQLEngine.run(t.sol, solDb, {mutate:true});
-          if(t.type==='select') ok = SQLEngine.compareResults(ur, sr, !!t.orderMatters);
-          else ok = JSON.stringify((userDb[t.table]||[]).map(r=>JSON.stringify(Object.entries(r).sort())).sort()) === JSON.stringify((solDb[t.table]||[]).map(r=>JSON.stringify(Object.entries(r).sort())).sort());
+          if(t.type==='select'){
+            ok = SQLEngine.compareResults(ur, sr, !!t.orderMatters);
+          } else if(t.type==='createview'){
+            const uv = SQLEngine.run('SELECT * FROM '+t.viewName, userDb, {mutate:true});
+            const sv = SQLEngine.run('SELECT * FROM '+t.viewName, solDb, {mutate:true});
+            ok = !!(uv.ok && sv.ok && SQLEngine.compareResults(uv, sv, false));
+          } else if(t.type==='drop'){
+            ok = !Object.keys(userDb).some(k => k.toUpperCase() === t.table.toUpperCase());
+          } else {
+            ok = JSON.stringify((userDb[t.table]||[]).map(r=>JSON.stringify(Object.entries(r).sort())).sort()) === JSON.stringify((solDb[t.table]||[]).map(r=>JSON.stringify(Object.entries(r).sort())).sort());
+          }
         }
         registerAnswer(it.w, ok, 'Musterlösung: '+t.sol);
       };

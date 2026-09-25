@@ -5,7 +5,7 @@ const StageQuiz = (() => {
   function render(el, world, cfg){
     const items = shuffle(cfg.pool).slice(0, Math.min(cfg.count, cfg.pool.length)).map(q => {
       const order = shuffle(q.o.map((_,i)=>i));
-      return {q: q.q, o: order.map(i=>q.o[i]), c: order.indexOf(q.c), e: q.e};
+      return {q: q.q, o: order.map(i=>q.o[i]), c: order.indexOf(q.c), e: q.e, _srcWorld: q._srcWorld || world.id};
     });
     let idx = 0, lives = cfg.lives, correct = 0, streak = 0, xpGain = 0, coinGain = 0, timer = null, timeLeft = 0, answered = false;
 
@@ -77,6 +77,8 @@ const StageQuiz = (() => {
         lives--; streak = 0;
       }
       noteWeak(world.id, ok);
+      const srcW = it._srcWorld || world.id;
+      if(ok) clearMissed('quiz', srcW, it.q); else noteMissed('quiz', srcW, it.q);
       const expl = document.createElement('div');
       expl.className = 'expl ' + (ok?'ok':'no');
       expl.innerHTML = `<b>${ok?'Richtig!':(i===-1?'Zeit abgelaufen.':'Nicht ganz.')}</b> ${esc(it.e||'')}

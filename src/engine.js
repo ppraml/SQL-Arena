@@ -22,6 +22,7 @@ const DEFAULT_STATE = () => ({
   progress: {}, // {w1:{quiz:{done,stars,best}, skill:{...}, boss:{...}}}
   examBest: null,
   weak: {}, // {w1:{ok:0,total:0}}
+  missed: {quiz:{}, sql:{}}, // {quiz:{'w1::Frage-Text':true}, sql:{'w5::s3':true}}
 });
 
 let S = Store.get('sqla:state', null) || DEFAULT_STATE();
@@ -72,6 +73,57 @@ function worldStars(worldId){
   const p = S.progress[worldId];
   if(!p) return 0;
   return (p.quiz?.stars||0) + (p.skill?.stars||0) + (p.boss?.stars||0);
+}
+
+/* ---------- Wiederholungs-/Lernmodus: merkt sich falsch beantwortete Fragen/Aufgaben ---------- */
+function noteMissed(kind, worldId, key){
+  if(!S.missed) S.missed = {quiz:{}, sql:{}};
+  if(!S.missed[kind]) S.missed[kind] = {};
+  S.missed[kind][worldId+'::'+key] = true;
+  saveState();
+}
+function clearMissed(kind, worldId, key){
+  if(S.missed && S.missed[kind]) delete S.missed[kind][worldId+'::'+key];
+  saveState();
+}
+function missedKeys(kind){
+  if(!S.missed || !S.missed[kind]) return [];
+  return Object.keys(S.missed[kind]).map(k => {
+    const i = k.indexOf('::');
+    return {worldId: k.slice(0,i), key: k.slice(i+2)};
+  });
+}
+function missedCount(){ return missedKeys('quiz').length + missedKeys('sql').length; }
+function buildReviewQuizPool(){
+  const out = [];
+  missedKeys('quiz').forEach(({worldId, key}) => {
+    const pools = [QUIZ[worldId]||[], BOSS[worldId]||[]];
+    for(const pool of pools){
+      const hit = pool.find(q => q.q === key);
+      if(hit){ out.push(Object.assign({}, hit, {_srcWorld: worldId})); break; }
+    }
+  });
+  return out;
+}
+function buildReviewSqlTasks(){
+  const out = [];
+  missedKeys('sql').forEach(({worldId, key}) => {
+    const pool = worldId === 'w5' ? SQL_TASKS_W5 : SQL_TASKS_W6;
+    const hit = pool.find(t => t.id === key);
+    if(hit) out.push(Object.assign({}, hit, {_srcWorld: worldId}));
+  });
+  return out;
+}
+const REVIEW_WORLD = {id:'review', n:'', title:'Wiederholung', sub:'Nur deine bisherigen Fehler', icon:'🔁', color:'k', skillType:'match'};
+function startReviewQuiz(){
+  const pool = buildReviewQuizPool();
+  if(!pool.length){ toast('Keine offenen Wiederholungen 🎉', 'ok'); return; }
+  nav(el2 => StageQuiz.render(el2, REVIEW_WORLD, {pool, count: pool.length, timeLimit:35, lives: pool.length+2, stageKey:'review', xpPer:8, coinPer:2}));
+}
+function startReviewSql(){
+  const tasks = buildReviewSqlTasks();
+  if(!tasks.length){ toast('Keine offenen Wiederholungen 🎉', 'ok'); return; }
+  nav(el2 => StageSql.render(el2, REVIEW_WORLD, {tasks}));
 }
 
 /* ---------- Navigation / Screen-Root ---------- */
@@ -157,6 +209,7 @@ function renderMap(el){
         <div><b>${S.bestStreak}</b><span>beste Serie</span></div>
       </div>
     </section>
+    ${reviewCardHtml()}
     <div class="path">
   `;
   WORLDS.forEach((w, wi) => {
@@ -183,6 +236,13 @@ function renderMap(el){
         ${prog.done ? starsHtml(prog.stars,3) : (unlocked ? '<span class="nhint">'+esc(st.desc)+'</span>' : '<span class="nhint">Gesperrt</span>')}
       </button>`;
     });
+    if(w.id === 'w6'){
+      html += `<button class="node txlab ready" id="txlabBtn">
+        <span class="nicon">🧪</span>
+        <span class="nlabel">Transaktions-Labor</span>
+        <span class="nhint">Bonus · jederzeit spielbar</span>
+      </button>`;
+    }
     html += `</div></div>`;
   });
   const examUnlocked = isExamUnlocked();
@@ -212,10 +272,34 @@ function renderMap(el){
   });
   const examBtn = wrap.querySelector('#examBtn');
   if(examBtn) examBtn.addEventListener('click', () => nav(renderExamIntro));
+  const txlabBtn = wrap.querySelector('#txlabBtn');
+  if(txlabBtn) txlabBtn.addEventListener('click', () => nav(el2 => TxLab.render(el2)));
+  const reviewQuizBtn = wrap.querySelector('#reviewQuizBtn');
+  if(reviewQuizBtn) reviewQuizBtn.addEventListener('click', startReviewQuiz);
+  const reviewSqlBtn = wrap.querySelector('#reviewSqlBtn');
+  if(reviewSqlBtn) reviewSqlBtn.addEventListener('click', startReviewSql);
 
   // Autoscroll zum aktuellen (nächsten offenen) Knoten
   const nextNode = wrap.querySelector('.node.ready') || wrap.querySelector('.node.done');
   if(nextNode){ setTimeout(()=> nextNode.scrollIntoView({block:'center', behavior:'instant'}), 30); }
+}
+
+function reviewCardHtml(){
+  const qn = missedKeys('quiz').length, sn = missedKeys('sql').length;
+  if(qn===0 && sn===0){
+    return `<section class="reviewcard reviewcard-empty">
+      <span class="wicon">✅</span>
+      <div><h3>Alles im grünen Bereich!</h3><p>Noch keine offenen Wiederholungen — falsch beantwortete Fragen landen automatisch hier.</p></div>
+    </section>`;
+  }
+  return `<section class="reviewcard">
+    <span class="wicon">🔁</span>
+    <div class="reviewtxt"><h3>Wiederholungsmodus</h3><p>Übe gezielt, was bisher noch nicht saß.</p></div>
+    <div class="reviewbtns">
+      ${qn>0 ? `<button class="btn warnbtn" id="reviewQuizBtn">🔁 ${qn} Frage${qn===1?'':'n'} wiederholen</button>` : ''}
+      ${sn>0 ? `<button class="btn warnbtn" id="reviewSqlBtn">🔁 ${sn} SQL-Aufgabe${sn===1?'':'n'} wiederholen</button>` : ''}
+    </div>
+  </section>`;
 }
 
 function totalStars(){
@@ -260,4 +344,5 @@ const Engine = {
   Store, shuffle, pick, esc, fmtNum, S, saveState, level, xpIntoLevel, addXp, addCoins, noteStreak, noteWeak,
   stageProg, completeStage, isStageUnlocked, isExamUnlocked, worldStars, totalStars,
   nav, root, renderHud, toast, confettiBurst, starsHtml, openStage,
+  noteMissed, clearMissed, missedCount, startReviewQuiz, startReviewSql,
 };

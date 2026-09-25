@@ -10,6 +10,17 @@
 .herostats b{font:800 24px var(--f-display)}
 .herostats span{font:600 11px var(--f-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--ink2)}
 
+.reviewcard{display:flex; align-items:center; gap:14px; border:1.5px dashed var(--warn); background:var(--warn-bg); border-radius:16px; padding:14px 16px; flex-wrap:wrap; margin-top:4px}
+.reviewcard .wicon{font-size:26px; flex-shrink:0}
+.reviewcard h3{margin:0 0 2px; font:800 15.5px var(--f-display); color:var(--warn)}
+.reviewcard p{margin:0; font-size:13px; color:var(--ink2)}
+.reviewtxt{flex:1 1 200px}
+.reviewbtns{display:flex; gap:8px; flex-wrap:wrap}
+.reviewcard-empty{border-style:solid; border-color:var(--a); background:var(--a-bg)}
+.reviewcard-empty h3{color:var(--a)}
+.warnbtn{border-color:var(--warn); color:var(--warn); background:var(--paper)}
+.warnbtn:hover{background:var(--warn-bg)}
+
 .path{display:flex; flex-direction:column; gap:22px; margin-top:18px}
 .worldsec{border:1.5px solid var(--line); background:var(--paper); border-radius:18px; padding:16px 16px 18px; position:relative; overflow:hidden}
 .worldsec::before{content:''; position:absolute; inset:0 0 auto 0; height:5px; background:var(--_c,var(--s))}
@@ -68,6 +79,7 @@
 .opt:disabled{cursor:default}
 .opt.correct{background:var(--a-bg); border-color:var(--a); color:var(--a)}
 .opt.wrong{background:var(--warn-bg); border-color:var(--warn); color:var(--warn)}
+.opt.dim{opacity:.55}
 .expl{margin-top:14px; padding:13px 16px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); font-size:14px; line-height:1.5}
 .expl.ok{border-color:var(--a); background:var(--a-bg)}
 .expl.no{border-color:var(--warn); background:var(--warn-bg)}
@@ -163,4 +175,34 @@ td i{color:var(--ink2); font-style:italic}
   .stagerow{grid-template-columns:repeat(3,1fr); gap:7px}
   .node{min-height:96px; padding:10px 6px}
   .matchgrid{gap:7px 8px}
+}
+
+/* ---- Transaktions-Labor ---- */
+.node.txlab{grid-column:1/-1; flex-direction:row; justify-content:flex-start; gap:12px; min-height:auto; padding:12px 16px; border-style:dashed; border-color:var(--warn)}
+.node.txlab .nicon{font-size:22px}
+.node.txlab .nlabel{font-size:14.5px}
+.node.txlab .nhint{color:var(--warn)}
+.txlabcard{text-align:left}
+.txlabcard .eyebrow, .txlabcard h2{text-align:center}
+.txlabintro{font-size:14.5px; line-height:1.5; margin:0 0 14px; text-align:center}
+.txlabswitch{display:flex; gap:8px; justify-content:center; margin-bottom:16px; flex-wrap:wrap}
+.chip{appearance:none; cursor:pointer; border:1.5px solid var(--line); background:var(--bg); color:var(--ink); font:700 13px var(--f-body); padding:7px 14px; border-radius:99px}
+.chip.on{background:var(--warn-bg); border-color:var(--warn); color:var(--warn)}
+.txlabstage{display:grid; grid-template-columns:1fr 1.1fr 1fr; gap:8px; margin-bottom:14px}
+.txsession, .txdb{border:1.5px solid var(--line); border-radius:12px; padding:10px 8px; text-align:center; background:var(--bg); transition:border-color .2s, background .2s}
+.txsession.active{border-color:var(--warn); background:var(--warn-bg)}
+.txdb{background:var(--paper); border-color:var(--ink)}
+.txhead{font:700 11.5px var(--f-mono); color:var(--ink2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.03em}
+.txval{font:800 17px var(--f-mono)}
+.txval.main{font-size:19px}
+.txsql{background:var(--code-bg); color:var(--code-ink); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font:600 12.5px/1.5 var(--f-mono); white-space:pre-wrap; margin:0 0 10px; overflow-x:auto}
+.txnote{font-size:14px; line-height:1.5; margin-bottom:10px}
+.txlabnav{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px}
+.txstepct{font:700 12px var(--f-mono); color:var(--ink2)}
+.txverdict{background:var(--warn-bg); color:var(--warn); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.5; margin-top:8px}
+.txverdict b{color:inherit}
+.txquiz{margin-top:16px}
+.txqtext{font:700 15px/1.4 var(--f-display); margin:0 0 10px}
+@media (max-width:520px){
+  .txlabstage{grid-template-columns:1fr; gap:6px}
 }

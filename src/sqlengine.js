@@ -12,7 +12,8 @@
 const KEYWORDS = new Set(['SELECT','FROM','WHERE','AND','OR','NOT','AS','JOIN','INNER','LEFT','RIGHT','OUTER',
   'ON','GROUP','BY','HAVING','ORDER','ASC','DESC','LIMIT','DISTINCT','IN','IS','NULL','LIKE','BETWEEN',
   'INSERT','INTO','VALUES','UPDATE','SET','DELETE','CREATE','TABLE','PRIMARY','KEY','FOREIGN','REFERENCES',
-  'NOT','DEFAULT','UNIQUE','TRUE','FALSE','UNION','ALL','EXISTS']);
+  'NOT','DEFAULT','UNIQUE','TRUE','FALSE','UNION','ALL','EXISTS','INTERSECT','EXCEPT','NATURAL','USING',
+  'VIEW','ALTER','ADD','COLUMN','DROP']);
 
 function tokenize(sql){
   const toks = []; let i = 0; const n = sql.length;
@@ -64,6 +65,9 @@ function tokenize(sql){
 
 class SqlError extends Error {}
 
+/* Aktuell laufende DB-Referenz für Subquery-Auswertung (SUBQ/EXISTS/IN-Subquery). */
+let CTX_DB = null;
+
 /* ---------- Parser ---------- */
 class Parser {
   constructor(toks){ this.toks = toks; this.p = 0; }
@@ -76,12 +80,27 @@ class Parser {
   _show(){ const t = this.peek(); return t.t==='eof' ? 'Ende' : JSON.stringify(t.v); }
 
   parseStatement(){
-    if(this.isKw('SELECT')) return this.parseSelect();
+    if(this.isKw('SELECT')) return this.parseSelectStmt();
     if(this.isKw('INSERT')) return this.parseInsert();
     if(this.isKw('UPDATE')) return this.parseUpdate();
     if(this.isKw('DELETE')) return this.parseDelete();
     if(this.isKw('CREATE')) return this.parseCreate();
-    throw new SqlError('Unbekannte Anweisung (erwarte SELECT/INSERT/UPDATE/DELETE/CREATE): '+this._show());
+    if(this.isKw('ALTER')) return this.parseAlter();
+    if(this.isKw('DROP')) return this.parseDrop();
+    throw new SqlError('Unbekannte Anweisung (erwarte SELECT/INSERT/UPDATE/DELETE/CREATE/ALTER/DROP): '+this._show());
+  }
+
+  // SELECT inkl. optionaler UNION/INTERSECT/EXCEPT-Verkettung
+  parseSelectStmt(){
+    let left = this.parseSelectCore();
+    while(this.isKw('UNION') || this.isKw('INTERSECT') || this.isKw('EXCEPT')){
+      const op = this.next().v;
+      let all = false;
+      if(op === 'UNION' && this.isKw('ALL')){ this.next(); all = true; }
+      const right = this.parseSelectCore();
+      left = {type:'setop', op, all, left, right};
+    }
+    return left;
   }
 
   parseIdentPath(){
@@ -99,7 +118,7 @@ class Parser {
     return {type:'col', table:null, col:name};
   }
 
-  parseSelect(){
+  parseSelectCore(){
     this.eatKw('SELECT');
     let distinct = false;
     if(this.isKw('DISTINCT')){ this.next(); distinct = true; }
@@ -111,16 +130,29 @@ class Parser {
     this.eatKw('FROM');
     const from = this.parseTableRef();
     const joins = [];
-    while(this.isKw('JOIN') || this.isKw('INNER') || this.isKw('LEFT') || this.isKw('RIGHT')){
+    while(this.isKw('NATURAL') || this.isKw('JOIN') || this.isKw('INNER') || this.isKw('LEFT') || this.isKw('RIGHT')){
+      let natural = false;
+      if(this.isKw('NATURAL')){ natural = true; this.next(); }
       let jt = 'INNER';
       if(this.isKw('LEFT')){ jt='LEFT'; this.next(); if(this.isKw('OUTER')) this.next(); }
       else if(this.isKw('RIGHT')){ jt='RIGHT'; this.next(); if(this.isKw('OUTER')) this.next(); }
       else if(this.isKw('INNER')){ jt='INNER'; this.next(); }
       this.eatKw('JOIN');
       const tbl = this.parseTableRef();
-      this.eatKw('ON');
-      const on = this.parseExprOr();
-      joins.push({type:jt, table:tbl, on});
+      let on = null, using = null;
+      if(natural){
+        // NATURAL JOIN: keine ON/USING-Klausel
+      } else if(this.isKw('USING')){
+        this.next();
+        this.eatOp('(');
+        using = [];
+        do{ if(this.isOp(',')) this.next(); using.push(this.next().v); } while(this.isOp(','));
+        this.eatOp(')');
+      } else {
+        this.eatKw('ON');
+        on = this.parseExprOr();
+      }
+      joins.push({type:jt, table:tbl, on, using, natural});
     }
     let where = null;
     if(this.isKw('WHERE')){ this.next(); where = this.parseExprOr(); }
@@ -175,6 +207,13 @@ class Parser {
     return this.parsePredicate();
   }
   parsePredicate(){
+    if(this.isKw('EXISTS')){
+      this.next();
+      this.eatOp('(');
+      const sub = this.parseSelectStmt();
+      this.eatOp(')');
+      return {op:'EXISTS', stmt: sub};
+    }
     if(this.isOp('(')){
       // Könnte geklammerter Bool-Ausdruck sein
       const save = this.p;
@@ -214,10 +253,15 @@ class Parser {
   maybeChainAfterParen(inner){ return inner; }
   parseInList(){
     this.eatOp('(');
+    if(this.isKw('SELECT')){
+      const sub = this.parseSelectStmt();
+      this.eatOp(')');
+      return {subq: sub};
+    }
     const items = [];
     do{ if(this.isOp(',')) this.next(); items.push(this.parseAddSub()); } while(this.isOp(','));
     this.eatOp(')');
-    return items;
+    return {list: items};
   }
 
   parseAddSub(){
@@ -251,6 +295,11 @@ class Parser {
     if(this.isKw('FALSE')){ this.next(); return {op:'LIT', v:false}; }
     if(this.isOp('(')){
       this.next();
+      if(this.isKw('SELECT')){
+        const sub = this.parseSelectStmt();
+        this.eatOp(')');
+        return {op:'SUBQ', stmt: sub};
+      }
       const e = this.parseExprOr();
       this.eatOp(')');
       return e;
@@ -329,7 +378,15 @@ class Parser {
   }
 
   parseCreate(){
-    this.eatKw('CREATE'); this.eatKw('TABLE');
+    this.eatKw('CREATE');
+    if(this.isKw('VIEW')){
+      this.next();
+      const name = this.next().v;
+      this.eatKw('AS');
+      const select = this.parseSelectStmt();
+      return {type:'createview', name, select};
+    }
+    this.eatKw('TABLE');
     const table = this.next().v;
     this.eatOp('(');
     const cols = [];
@@ -355,6 +412,30 @@ class Parser {
     this.eatOp(')');
     return {type:'create', table, cols};
   }
+
+  parseAlter(){
+    this.eatKw('ALTER'); this.eatKw('TABLE');
+    const table = this.next().v;
+    this.eatKw('ADD');
+    if(this.isKw('COLUMN')) this.next();
+    const col = this.next().v;
+    let dtype = this.next().v;
+    if(this.isOp('(')){ this.next(); while(!this.isOp(')')) this.next(); this.next(); }
+    let defaultVal = undefined;
+    while(true){
+      if(this.isKw('DEFAULT')){ this.next(); defaultVal = this.parseAddSub(); continue; }
+      if(this.isKw('NOT')){ this.next(); this.eatKw('NULL'); continue; }
+      if(this.isKw('NULL')){ this.next(); continue; }
+      break;
+    }
+    return {type:'alter', table, col, dtype:String(dtype).toUpperCase(), defaultVal};
+  }
+
+  parseDrop(){
+    this.eatKw('DROP'); this.eatKw('TABLE');
+    const table = this.next().v;
+    return {type:'drop', table};
+  }
 }
 
 function parseSQL(sql){
@@ -368,14 +449,26 @@ function parseSQL(sql){
 /* ---------- Evaluator ---------- */
 function cloneDb(db){
   const out = {};
-  for(const k in db) out[k] = db[k].map(r => Object.assign({}, r));
+  for(const k in db){
+    if(k === '__views'){ out.__views = Object.assign({}, db.__views); continue; }
+    out[k] = db[k].map(r => Object.assign({}, r));
+  }
   return out;
 }
 
-function findTable(db, name){
-  const key = Object.keys(db).find(k => k.toUpperCase() === String(name).toUpperCase());
-  if(!key) throw new SqlError('Unbekannte Tabelle: '+name);
-  return {key, rows: db[key]};
+// forWrite=true: Views werden nicht materialisiert, sondern lösen einen Fehler aus (INSERT/UPDATE/DELETE/ALTER/DROP auf Views verboten).
+function findTable(db, name, forWrite){
+  const key = Object.keys(db).find(k => k !== '__views' && k.toUpperCase() === String(name).toUpperCase());
+  if(key) return {key, rows: db[key]};
+  const viewKey = db.__views && Object.keys(db.__views).find(k => k === String(name).toUpperCase());
+  if(viewKey){
+    if(forWrite) throw new SqlError('Views sind nur lesbar (CREATE VIEW): '+name);
+    const res = runSelectStatement(db.__views[viewKey], db, null);
+    if(!res.ok) throw new SqlError('Fehler beim Auswerten der View "'+name+'": '+res.error);
+    const rows = res.rows.map(r => { const o = {}; res.columns.forEach((c,i) => { o[c] = r[i]; }); return o; });
+    return {key:name, rows, isView:true};
+  }
+  throw new SqlError('Unbekannte Tabelle: '+name);
 }
 
 // env: {tableAliasUpper: rowObjectOrNull, ...}, plus __agg for aggregate context
@@ -440,7 +533,24 @@ function evalExpr(e, env){
     case 'IN': {
       const l = evalExpr(e.l, env);
       if(l == null) return null;
-      return e.r.some(x => evalExpr(x, env) == l);
+      if(e.r.subq){
+        const res = runSelectStatement(e.r.subq, CTX_DB, env);
+        if(!res.ok) throw new SqlError('Subquery-Fehler: '+res.error);
+        return res.rows.some(row => row[0] == l);
+      }
+      return e.r.list.some(x => evalExpr(x, env) == l);
+    }
+    case 'SUBQ': {
+      const res = runSelectStatement(e.stmt, CTX_DB, env);
+      if(!res.ok) throw new SqlError('Subquery-Fehler: '+res.error);
+      if(res.type !== 'select') throw new SqlError('Subquery muss ein SELECT sein');
+      if(res.rows.length === 0) return null;
+      return res.rows[0][0];
+    }
+    case 'EXISTS': {
+      const res = runSelectStatement(e.stmt, CTX_DB, env);
+      if(!res.ok) throw new SqlError('Subquery-Fehler: '+res.error);
+      return res.rows.length > 0;
     }
     case 'BETWEEN': {
       const v = evalExpr(e.e, env), lo = evalExpr(e.lo, env), hi = evalExpr(e.hi, env);
@@ -505,29 +615,53 @@ function colLabel(item, idx){
 function makeEnvFromRow(tableKey, row){ const env = {}; env[tableKey] = row; return env; }
 function mergeEnv(a, b){ return Object.assign({}, a, b); }
 
-function runSelect(stmt, db){
+function runSelect(stmt, db, outerEnv){
   const {key: fromKey, rows: fromRows} = findTable(db, stmt.from.name);
   const fromAlias = stmt.from.alias || stmt.from.name;
-  let combined = fromRows.map(r => makeEnvFromRow(fromAlias, r));
+  let combined = fromRows.map(r => outerEnv ? mergeEnv(outerEnv, makeEnvFromRow(fromAlias, r)) : makeEnvFromRow(fromAlias, r));
 
+  let joinedTables = [stmt.from];
   for(const j of stmt.joins){
     const {rows: joinRows} = findTable(db, j.table.name);
     const joinAlias = j.table.alias || j.table.name;
+    let usingCols = j.using;
+    if(j.natural){
+      const joinSample = joinRows[0] || {};
+      const joinColsUp = new Set(Object.keys(joinSample).map(c => c.toUpperCase()));
+      const commonSet = new Set();
+      for(const t of joinedTables){
+        const {rows: tRows} = findTable(db, t.name);
+        const sample = tRows[0] || {};
+        Object.keys(sample).forEach(c => { if(joinColsUp.has(c.toUpperCase())) commonSet.add(c); });
+      }
+      usingCols = [...commonSet];
+    }
     const next = [];
     for(const leftEnv of combined){
       let matched = false;
       for(const r of joinRows){
         const env = mergeEnv(leftEnv, makeEnvFromRow(joinAlias, r));
         let ok;
-        try{ ok = evalExpr(j.on, env); } catch(err){ ok = false; }
+        try{
+          if(usingCols && usingCols.length){
+            ok = usingCols.every(colName => {
+              const lv = resolveCol(leftEnv, null, colName);
+              const rk = Object.keys(r).find(k => k.toUpperCase() === colName.toUpperCase());
+              const rv = rk ? r[rk] : null;
+              return lv != null && rv != null && lv == rv;
+            });
+          } else {
+            ok = evalExpr(j.on, env);
+          }
+        } catch(err){ ok = false; }
         if(ok){ matched = true; next.push(env); }
       }
       if(!matched && j.type === 'LEFT'){
-        const nullRow = {}; // alle Spaltennamen unbekannt -> resolveCol gibt null zurück, da env[alias]=null
         next.push(mergeEnv(leftEnv, {[joinAlias]: null}));
       }
     }
     combined = next;
+    joinedTables.push(j.table);
   }
 
   if(stmt.where){
@@ -669,6 +803,42 @@ function runSelect(stmt, db){
   return {ok:true, type:'select', columns, rows: outRows};
 }
 
+// Dispatcher: normales SELECT oder UNION/INTERSECT/EXCEPT-Verkettung; outerEnv erlaubt korrelierte Subqueries.
+function runSelectStatement(stmt, db, outerEnv){
+  if(stmt.type === 'setop') return runSetOp(stmt, db, outerEnv);
+  return runSelect(stmt, db, outerEnv);
+}
+
+function runSetOp(stmt, db, outerEnv){
+  const l = runSelectStatement(stmt.left, db, outerEnv);
+  if(!l.ok) return l;
+  const r = runSelectStatement(stmt.right, db, outerEnv);
+  if(!r.ok) return r;
+  if(l.columns.length !== r.columns.length){
+    return {ok:false, error:(stmt.op)+': beide SELECTs müssen dieselbe Anzahl Spalten haben'};
+  }
+  const na = l.rows.map(row => row.map(normVal));
+  const nb = r.rows.map(row => row.map(normVal));
+  let outNorm;
+  if(stmt.op === 'UNION'){
+    outNorm = na.concat(nb);
+    if(!stmt.all){
+      const seen = new Set(); const uniq = [];
+      for(const row of outNorm){ const k = JSON.stringify(row); if(!seen.has(k)){ seen.add(k); uniq.push(row); } }
+      outNorm = uniq;
+    }
+  } else if(stmt.op === 'INTERSECT'){
+    const setB = new Set(nb.map(row => JSON.stringify(row)));
+    const seen = new Set(); outNorm = [];
+    for(const row of na){ const k = JSON.stringify(row); if(setB.has(k) && !seen.has(k)){ seen.add(k); outNorm.push(row); } }
+  } else { // EXCEPT
+    const setB = new Set(nb.map(row => JSON.stringify(row)));
+    const seen = new Set(); outNorm = [];
+    for(const row of na){ const k = JSON.stringify(row); if(!setB.has(k) && !seen.has(k)){ seen.add(k); outNorm.push(row); } }
+  }
+  return {ok:true, type:'select', columns: l.columns, rows: outNorm};
+}
+
 function evalArithWithAgg(e, rows){
   if(e.op === 'FUNC' && AGG_FUNCS.has(e.name)) return evalAgg(e, rows);
   if(e.op === 'ARITH'){
@@ -706,7 +876,7 @@ function rowSampleFor(stmt, db, alias){
 }
 
 function runInsert(stmt, db){
-  const {key} = findTable(db, stmt.table);
+  const {key} = findTable(db, stmt.table, true);
   const existing = db[key];
   const template = existing[0] || {};
   const allCols = stmt.cols || Object.keys(template);
@@ -722,7 +892,7 @@ function runInsert(stmt, db){
 }
 
 function runUpdate(stmt, db){
-  const {key} = findTable(db, stmt.table);
+  const {key} = findTable(db, stmt.table, true);
   const rows = db[key];
   let affected = 0;
   for(const row of rows){
@@ -741,7 +911,7 @@ function runUpdate(stmt, db){
 }
 
 function runDelete(stmt, db){
-  const {key} = findTable(db, stmt.table);
+  const {key} = findTable(db, stmt.table, true);
   const rows = db[key];
   const kept = [];
   let affected = 0;
@@ -756,28 +926,62 @@ function runDelete(stmt, db){
 }
 
 function runCreate(stmt, db){
-  const exists = Object.keys(db).some(k => k.toUpperCase() === stmt.table.toUpperCase());
+  const exists = Object.keys(db).some(k => k !== '__views' && k.toUpperCase() === stmt.table.toUpperCase())
+    || (db.__views && Object.keys(db.__views).some(k => k === stmt.table.toUpperCase()));
   if(exists) throw new SqlError('Tabelle existiert bereits: '+stmt.table);
   db[stmt.table] = [];
   return {ok:true, type:'create', table: stmt.table, columns: stmt.cols, db};
 }
 
+function runCreateView(stmt, db){
+  db.__views = db.__views || {};
+  const upName = stmt.name.toUpperCase();
+  const exists = Object.keys(db).some(k => k !== '__views' && k.toUpperCase() === upName) || db.__views[upName];
+  if(exists) throw new SqlError('Name bereits vergeben: '+stmt.name);
+  db.__views[upName] = stmt.select;
+  return {ok:true, type:'createview', name: stmt.name, db};
+}
+
+function runAlter(stmt, db){
+  const {rows} = findTable(db, stmt.table, true);
+  const already = rows[0] && Object.keys(rows[0]).some(k => k.toUpperCase() === stmt.col.toUpperCase());
+  if(already) throw new SqlError('Spalte existiert bereits: '+stmt.col);
+  const defVal = stmt.defaultVal !== undefined ? evalExpr(stmt.defaultVal, {}) : null;
+  rows.forEach(r => { r[stmt.col] = defVal; });
+  return {ok:true, type:'alter', table: stmt.table, col: stmt.col, affected: rows.length, db};
+}
+
+function runDrop(stmt, db){
+  const {key} = findTable(db, stmt.table, true);
+  delete db[key];
+  return {ok:true, type:'drop', table: stmt.table, db};
+}
+
 function run(sql, db, opts){
   opts = opts || {};
   const workDb = opts.mutate ? db : cloneDb(db);
+  const prevCtx = CTX_DB;
+  CTX_DB = workDb;
   try{
     const stmt = parseSQL(sql);
     let res;
-    if(stmt.type === 'select') res = runSelect(stmt, workDb);
+    if(stmt.type === 'select') res = runSelect(stmt, workDb, null);
+    else if(stmt.type === 'setop') res = runSetOp(stmt, workDb, null);
     else if(stmt.type === 'insert') res = runInsert(stmt, workDb);
     else if(stmt.type === 'update') res = runUpdate(stmt, workDb);
     else if(stmt.type === 'delete') res = runDelete(stmt, workDb);
     else if(stmt.type === 'create') res = runCreate(stmt, workDb);
+    else if(stmt.type === 'createview') res = runCreateView(stmt, workDb);
+    else if(stmt.type === 'alter') res = runAlter(stmt, workDb);
+    else if(stmt.type === 'drop') res = runDrop(stmt, workDb);
+    else throw new SqlError('Nicht unterstützte Anweisung');
     res.stmt = stmt;
     res.dbAfter = workDb;
     return res;
   } catch(err){
     return {ok:false, error: (err && err.message) || String(err)};
+  } finally {
+    CTX_DB = prevCtx;
   }
 }
 

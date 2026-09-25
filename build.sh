@@ -9,7 +9,7 @@ OUT=index.html
   echo "</style>"
   cat src/body.html
   echo "<script>"
-  cat src/sqlengine.js src/data.js src/engine.js src/stage_quiz.js src/stage_match.js src/stage_sql.js src/stage_exam.js src/main.js
+  cat src/sqlengine.js src/data.js src/engine.js src/stage_quiz.js src/stage_match.js src/stage_sql.js src/stage_txlab.js src/stage_exam.js src/main.js
   echo "</script>"
 } > /tmp/_body.html
 {
