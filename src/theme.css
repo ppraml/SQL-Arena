@@ -1,0 +1,78 @@
+:root{
+  --bg:#F2F5FB; --paper:#FFFFFF; --ink:#16213A; --ink2:#4B5877; --line:#D3DBEA; --grid:rgba(40,70,130,.055);
+  --s:#2559D6; --s-bg:#E3EBFC;
+  --b:#96600F; --b-bg:#FBEFD5;
+  --a:#137A54; --a-bg:#DCF2E8;
+  --k:#6D3FCB; --k-bg:#EAE3FA;
+  --warn:#BF3227; --warn-bg:#FCE5E2;
+  --mk:#FFE566; --hl-bg:#FFF1A8; --hl:#D9B300;
+  --code-bg:#101A33; --code-ink:#E6EDFF;
+  --f-display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --f-body:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --hh:64px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1322; --paper:#151D33; --ink:#E8EDF9; --ink2:#A3B0CC; --line:#2B3654; --grid:rgba(140,170,255,.05);
+    --s:#8CAEFF; --s-bg:#1A2A55;
+    --b:#F0BA55; --b-bg:#3A2D12;
+    --a:#5ED6A5; --a-bg:#123829;
+    --k:#BBA0FF; --k-bg:#2B2252;
+    --warn:#FF9086; --warn-bg:#45201D;
+    --mk:#6B5A0F; --hl-bg:#4D4110; --hl:#FFD84A;
+    --code-bg:#0A0F1D;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1322; --paper:#151D33; --ink:#E8EDF9; --ink2:#A3B0CC; --line:#2B3654; --grid:rgba(140,170,255,.05);
+  --s:#8CAEFF; --s-bg:#1A2A55;
+  --b:#F0BA55; --b-bg:#3A2D12;
+  --a:#5ED6A5; --a-bg:#123829;
+  --k:#BBA0FF; --k-bg:#2B2252;
+  --warn:#FF9086; --warn-bg:#45201D;
+  --mk:#6B5A0F; --hl-bg:#4D4110; --hl:#FFD84A;
+  --code-bg:#0A0F1D;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; padding-inline:16px; padding-block:0 60px;
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  color:var(--ink); font:400 16px/1.6 var(--f-body);
+}
+main{max-width:900px; margin-inline:auto}
+p{margin:0 0 12px; max-width:70ch}
+b,strong{font-weight:700}
+code{font-family:var(--f-mono); font-size:.85em; background:var(--code-bg); color:var(--code-ink); border-radius:5px; padding:1px 6px; word-break:break-word}
+:focus-visible{outline:3px solid var(--s); outline-offset:2px}
+button,input,select,textarea{font-family:inherit}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--f-display); letter-spacing:-.02em; margin:0 0 8px}
+mark{background:linear-gradient(transparent 56%,var(--mk) 56% 94%,transparent 94%); color:inherit; padding:0 .06em}
+.eyebrow{font:600 12px var(--f-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--ink2); margin-bottom:4px}
+
+/* ---- Buttons ---- */
+.btn{appearance:none; cursor:pointer; border:1.5px solid var(--line); background:var(--paper); color:var(--ink);
+  font:700 14.5px var(--f-body); padding:10px 16px; border-radius:12px; transition:transform .1s, box-shadow .15s, border-color .15s}
+.btn:hover{border-color:var(--ink2)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--s); border-color:var(--s); color:#fff}
+.btn.primary:hover{box-shadow:0 4px 14px color-mix(in srgb, var(--s) 45%, transparent)}
+.btn.big{padding:14px 22px; font-size:16px; border-radius:14px}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+
+/* ---- HUD ---- */
+.top{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; margin-inline:-16px;
+  background:color-mix(in srgb,var(--bg) 93%,transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+.hud{display:flex; align-items:center; gap:10px 16px; padding:10px 16px; max-width:932px; margin-inline:auto; flex-wrap:wrap}
+.hbrand{appearance:none; border:0; background:none; cursor:pointer; padding:0; display:flex; align-items:center; gap:6px; color:var(--ink); font:800 17px var(--f-display)}
+.hbrand b{color:var(--s)}
+.hstat{display:flex; align-items:center; gap:8px; font:700 13px var(--f-mono); color:var(--ink2)}
+.hstat.hcoin{margin-left:auto; background:var(--b-bg); color:var(--b); padding:4px 10px; border-radius:99px}
+.hlv{white-space:nowrap}
+.hxpbar{width:70px; height:7px; border-radius:99px; background:var(--line); overflow:hidden; display:inline-block}
+.hxpbar i{display:block; height:100%; background:var(--a); transition:width .4s}
+@media (max-width:420px){ .hbrand{font-size:15px} .hxpbar{width:46px} }

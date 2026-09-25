@@ -1,0 +1,166 @@
+/* ============================================================
+   Game UI
+   ============================================================ */
+.mapwrap{padding-block:12px 32px}
+.hero{padding:22px 4px 8px}
+.hero h1{font:800 clamp(30px,7vw,48px)/1.05 var(--f-display); letter-spacing:-.03em; margin:0 0 10px}
+.herotxt{color:var(--ink2); max-width:60ch}
+.herostats{display:flex; gap:22px; margin-top:14px; flex-wrap:wrap}
+.herostats div{display:flex; flex-direction:column}
+.herostats b{font:800 24px var(--f-display)}
+.herostats span{font:600 11px var(--f-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--ink2)}
+
+.path{display:flex; flex-direction:column; gap:22px; margin-top:18px}
+.worldsec{border:1.5px solid var(--line); background:var(--paper); border-radius:18px; padding:16px 16px 18px; position:relative; overflow:hidden}
+.worldsec::before{content:''; position:absolute; inset:0 0 auto 0; height:5px; background:var(--_c,var(--s))}
+.worldsec.g-s::before{background:var(--s)} .worldsec.g-k::before{background:var(--k)} .worldsec.g-a::before{background:var(--a)}
+.worldsec.g-b::before{background:var(--b)} .worldsec.g-warn::before{background:var(--warn)}
+.wsechead{display:flex; align-items:center; gap:12px; margin-bottom:12px}
+.wicon{font-size:28px; line-height:1}
+.wicon.big{font-size:44px}
+.wsechead h2{font:800 18px var(--f-display); margin:0}
+.wsechead p{margin:2px 0 0; color:var(--ink2); font-size:13px}
+.wstars{margin-left:auto}
+.stars{display:inline-flex; gap:1px}
+.star{color:var(--line); font-size:15px}
+.star.on{color:var(--hl)}
+
+.stagerow{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+.finalesec .stagerow{grid-template-columns:1fr}
+.node{appearance:none; cursor:pointer; border:1.5px solid var(--line); background:var(--bg); border-radius:14px; padding:14px 10px;
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:4px; min-height:108px; transition:transform .12s, border-color .15s}
+.node:hover:not(:disabled){border-color:var(--ink2); transform:translateY(-2px)}
+.node:disabled{opacity:.55; cursor:not-allowed}
+.node.done{background:var(--a-bg); border-color:var(--a)}
+.node.ready{border-color:var(--s); box-shadow:0 0 0 2px color-mix(in srgb,var(--s) 25%, transparent)}
+.nicon{font-size:24px}
+.nlabel{font:700 13px var(--f-body)}
+.nhint{font:500 11px var(--f-body); color:var(--ink2)}
+.examnode{min-height:80px; flex-direction:row; justify-content:flex-start; gap:14px; text-align:left; padding:16px 18px}
+.examnode .nlabel{font-size:15px}
+
+/* ---- Intro-Screen ---- */
+.introwrap{padding-block:16px 40px; max-width:560px; margin-inline:auto}
+.backlnk{appearance:none; border:0; background:none; cursor:pointer; color:var(--ink2); font:700 13px var(--f-body); padding:6px 0; margin-bottom:10px}
+.introcard{border:1.5px solid var(--line); background:var(--paper); border-radius:20px; padding:32px 24px; text-align:center}
+.introcard h2{font-size:26px; margin:6px 0 10px}
+.introcard p{margin-inline:auto; color:var(--ink2)}
+.examchoices{display:flex; flex-direction:column; gap:10px; margin-top:18px}
+
+/* ---- Stage-Runner ---- */
+.stagewrap{padding-block:14px 40px; max-width:640px; margin-inline:auto; position:relative}
+.stagehead{display:flex; align-items:center; gap:12px; margin-bottom:10px}
+.stagehead .backlnk{margin:0; font-size:18px}
+.qprog{flex:1; height:7px; border-radius:99px; background:var(--line); overflow:hidden}
+.qprog i{display:block; height:100%; background:var(--s); transition:width .3s}
+.lives, .mtime, .examn{font:700 13px var(--f-mono); white-space:nowrap; color:var(--ink2)}
+.streakbadge{display:inline-block; background:var(--warn-bg); color:var(--warn); font:800 12px var(--f-mono); padding:4px 10px; border-radius:99px; margin-bottom:8px}
+.streakbadge.hot{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.timerbar{height:5px; border-radius:99px; background:var(--line); overflow:hidden; margin-bottom:14px}
+.timerbar i{display:block; height:100%; background:var(--warn); transition:width .1s linear}
+.qtext{font:700 clamp(19px,4vw,24px)/1.3 var(--f-display); margin:0 0 16px}
+.qcount{color:var(--ink2); font:600 12px var(--f-mono); margin-top:10px}
+.opts{display:grid; gap:10px}
+.opt{appearance:none; cursor:pointer; text-align:left; border:1.5px solid var(--line); background:var(--paper); color:var(--ink);
+  font:600 15px var(--f-body); padding:13px 16px; border-radius:12px; transition:border-color .15s, background .15s}
+.opt:hover:not(:disabled){border-color:var(--s)}
+.opt:disabled{cursor:default}
+.opt.correct{background:var(--a-bg); border-color:var(--a); color:var(--a)}
+.opt.wrong{background:var(--warn-bg); border-color:var(--warn); color:var(--warn)}
+.expl{margin-top:14px; padding:13px 16px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); font-size:14px; line-height:1.5}
+.expl.ok{border-color:var(--a); background:var(--a-bg)}
+.expl.no{border-color:var(--warn); background:var(--warn-bg)}
+.expl code{display:inline-block; margin-top:4px}
+.nextrow{margin-top:12px}
+.nextrow .btn{width:100%}
+
+/* ---- Ergebnis-Karte ---- */
+.resultcard{border:1.5px solid var(--line); background:var(--paper); border-radius:20px; padding:36px 24px; text-align:center; position:relative; overflow:hidden; margin-top:10px}
+.resultcard.win{border-color:var(--a)}
+.resultcard.lose{border-color:var(--warn)}
+.ricon{font-size:44px; display:block; margin-bottom:8px}
+.resultcard h2{font-size:24px}
+.resultcard .stars{justify-content:center; margin:10px 0}
+.resultcard .stars .star{font-size:26px}
+.rewards{font:800 15px var(--f-mono); color:var(--b)}
+.rbtns{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap}
+.confwrap{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+.confetti{position:absolute; top:40%; left:50%; width:8px; height:8px; border-radius:2px;
+  transform:translate(calc(var(--x,0)*140px), 0) rotate(var(--r,0deg));
+  animation:confetti var(--d,0.9s) ease-out forwards}
+@keyframes confetti{ from{ opacity:1; transform:translate(calc(var(--x,0)*20px), -10px) rotate(0deg);} to{ opacity:0; transform:translate(calc(var(--x,0)*160px), 220px) rotate(var(--r,180deg));} }
+
+/* ---- Match ---- */
+.matchgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px 10px; margin-top:10px}
+.mitem{appearance:none; cursor:pointer; text-align:left; border:1.5px solid var(--line); background:var(--paper); color:var(--ink);
+  font:600 13.5px/1.35 var(--f-body); padding:11px 12px; border-radius:11px; min-height:52px; display:flex; align-items:center}
+.mitem:hover:not(:disabled){border-color:var(--s)}
+.mitem.sel{border-color:var(--s); background:var(--s-bg); box-shadow:0 0 0 2px var(--s)}
+.mitem.done{background:var(--a-bg); border-color:var(--a); color:var(--a); opacity:.8}
+.mitem.shake{animation:shake .4s}
+@keyframes shake{ 10%,90%{transform:translateX(-3px)} 20%,80%{transform:translateX(4px)} 30%,50%,70%{transform:translateX(-6px)} 40%,60%{transform:translateX(6px)} }
+
+/* ---- SQL-Werkstatt ---- */
+.attemptct{font:700 13px var(--f-mono); color:var(--ink2); white-space:nowrap}
+.sqlintro{background:var(--hl-bg); color:var(--b); border-radius:12px; padding:10px 14px; font-size:13.5px; font-weight:600; margin:0 0 10px}
+.sqltask{background:var(--bg); border:1.5px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px; font-size:15.5px; line-height:1.5}
+.refrow{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px}
+.refrow .schemabox{flex:1 1 220px; margin-bottom:0}
+.schemabox{border:1.5px dashed var(--line); border-radius:12px; padding:8px 12px}
+.schemabox summary{cursor:pointer; font:700 13px var(--f-body); color:var(--ink2); padding:4px 0}
+.schemas{display:flex; gap:14px; overflow-x:auto; padding:8px 2px}
+.schemat{flex:0 0 auto; min-width:180px}
+.schemat h5{margin:0 0 4px; font:700 12px var(--f-mono); color:var(--ink2)}
+.schemat h5 span{font-weight:400}
+.cheats{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px; padding:8px 2px}
+.cheatcard{background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px}
+.cheatcard h6{margin:0 0 4px; font:700 11.5px var(--f-body); color:var(--ink2)}
+.cheatcard pre{margin:0; font:12px/1.5 var(--f-mono); color:var(--ink); white-space:pre-wrap; word-break:break-word}
+.tblwrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:12.5px}
+th,td{padding:5px 9px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
+th{background:var(--bg); font:700 11px var(--f-mono); text-transform:uppercase; letter-spacing:.03em; color:var(--ink2)}
+td i{color:var(--ink2); font-style:italic}
+.restbl{font-size:13.5px}
+.sqlin{width:100%; min-height:92px; font:14px/1.5 var(--f-mono); background:var(--code-bg); color:var(--code-ink);
+  border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; resize:vertical}
+.sqlin:focus{outline:2px solid var(--s); outline-offset:1px}
+.sqlbtns{display:flex; gap:8px; margin:10px 0; flex-wrap:wrap}
+.hintbtn:disabled{opacity:.4}
+.solbtn{border-color:var(--k); color:var(--k)}
+.sqlout{margin-bottom:6px}
+.sqlmsg{font:600 13.5px var(--f-body); padding:8px 0}
+.sqlmsg.err{color:var(--warn)}
+.sqlmsg.ok{color:var(--a)}
+.sqlmsg.warn{color:var(--b)}
+.rowcount{color:var(--ink2); font:600 11px var(--f-mono); margin:4px 0 0}
+.hintout{margin-top:6px}
+.hintline{background:var(--b-bg); color:var(--b); border-radius:10px; padding:9px 12px; font-size:13.5px; margin:0 0 6px}
+.hintline.solreveal{background:var(--k-bg); color:var(--k)}
+.hintline.nudge{background:var(--s-bg); color:var(--s)}
+
+/* ---- Exam / Prüfungsarena ---- */
+.worldbars{display:grid; gap:10px; margin:16px 0; text-align:left}
+.wbar{display:grid; grid-template-columns:150px 1fr 40px; align-items:center; gap:8px 10px; font-size:12.5px}
+.wblabel{color:var(--ink2); line-height:1.25}
+.wbtrack{height:8px; border-radius:99px; background:var(--line); overflow:hidden}
+.wbtrack i{display:block; height:100%; background:var(--a)}
+.wbtrack i.low{background:var(--warn)}
+.wbpct{font:700 12px var(--f-mono); text-align:right}
+.weaktip{background:var(--warn-bg); color:var(--warn); border-radius:10px; padding:10px 14px; font-weight:700; font-size:13.5px}
+.weaktip.ok{background:var(--a-bg); color:var(--a)}
+@media (max-width:480px){ .wbar{grid-template-columns:1fr 40px} .wblabel{grid-column:1/-1}}
+
+/* ---- Toast ---- */
+.toast{position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--paper);
+  font:700 13.5px var(--f-body); padding:10px 18px; border-radius:99px; opacity:0; transition:opacity .25s, transform .25s; z-index:80; white-space:nowrap}
+.toast.ok{background:var(--a)}
+.toast.no{background:var(--warn)}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+@media (max-width:520px){
+  .stagerow{grid-template-columns:repeat(3,1fr); gap:7px}
+  .node{min-height:96px; padding:10px 6px}
+  .matchgrid{gap:7px 8px}
+}

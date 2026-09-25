@@ -1,0 +1,2370 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+<title>SQL-Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F5FB; --paper:#FFFFFF; --ink:#16213A; --ink2:#4B5877; --line:#D3DBEA; --grid:rgba(40,70,130,.055);
+  --s:#2559D6; --s-bg:#E3EBFC;
+  --b:#96600F; --b-bg:#FBEFD5;
+  --a:#137A54; --a-bg:#DCF2E8;
+  --k:#6D3FCB; --k-bg:#EAE3FA;
+  --warn:#BF3227; --warn-bg:#FCE5E2;
+  --mk:#FFE566; --hl-bg:#FFF1A8; --hl:#D9B300;
+  --code-bg:#101A33; --code-ink:#E6EDFF;
+  --f-display:'Bricolage Grotesque','Trebuchet MS',system-ui,sans-serif;
+  --f-body:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --hh:64px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1322; --paper:#151D33; --ink:#E8EDF9; --ink2:#A3B0CC; --line:#2B3654; --grid:rgba(140,170,255,.05);
+    --s:#8CAEFF; --s-bg:#1A2A55;
+    --b:#F0BA55; --b-bg:#3A2D12;
+    --a:#5ED6A5; --a-bg:#123829;
+    --k:#BBA0FF; --k-bg:#2B2252;
+    --warn:#FF9086; --warn-bg:#45201D;
+    --mk:#6B5A0F; --hl-bg:#4D4110; --hl:#FFD84A;
+    --code-bg:#0A0F1D;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1322; --paper:#151D33; --ink:#E8EDF9; --ink2:#A3B0CC; --line:#2B3654; --grid:rgba(140,170,255,.05);
+  --s:#8CAEFF; --s-bg:#1A2A55;
+  --b:#F0BA55; --b-bg:#3A2D12;
+  --a:#5ED6A5; --a-bg:#123829;
+  --k:#BBA0FF; --k-bg:#2B2252;
+  --warn:#FF9086; --warn-bg:#45201D;
+  --mk:#6B5A0F; --hl-bg:#4D4110; --hl:#FFD84A;
+  --code-bg:#0A0F1D;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; padding-inline:16px; padding-block:0 60px;
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  color:var(--ink); font:400 16px/1.6 var(--f-body);
+}
+main{max-width:900px; margin-inline:auto}
+p{margin:0 0 12px; max-width:70ch}
+b,strong{font-weight:700}
+code{font-family:var(--f-mono); font-size:.85em; background:var(--code-bg); color:var(--code-ink); border-radius:5px; padding:1px 6px; word-break:break-word}
+:focus-visible{outline:3px solid var(--s); outline-offset:2px}
+button,input,select,textarea{font-family:inherit}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--f-display); letter-spacing:-.02em; margin:0 0 8px}
+mark{background:linear-gradient(transparent 56%,var(--mk) 56% 94%,transparent 94%); color:inherit; padding:0 .06em}
+.eyebrow{font:600 12px var(--f-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--ink2); margin-bottom:4px}
+
+/* ---- Buttons ---- */
+.btn{appearance:none; cursor:pointer; border:1.5px solid var(--line); background:var(--paper); color:var(--ink);
+  font:700 14.5px var(--f-body); padding:10px 16px; border-radius:12px; transition:transform .1s, box-shadow .15s, border-color .15s}
+.btn:hover{border-color:var(--ink2)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--s); border-color:var(--s); color:#fff}
+.btn.primary:hover{box-shadow:0 4px 14px color-mix(in srgb, var(--s) 45%, transparent)}
+.btn.big{padding:14px 22px; font-size:16px; border-radius:14px}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+
+/* ---- HUD ---- */
+.top{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; margin-inline:-16px;
+  background:color-mix(in srgb,var(--bg) 93%,transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+.hud{display:flex; align-items:center; gap:10px 16px; padding:10px 16px; max-width:932px; margin-inline:auto; flex-wrap:wrap}
+.hbrand{appearance:none; border:0; background:none; cursor:pointer; padding:0; display:flex; align-items:center; gap:6px; color:var(--ink); font:800 17px var(--f-display)}
+.hbrand b{color:var(--s)}
+.hstat{display:flex; align-items:center; gap:8px; font:700 13px var(--f-mono); color:var(--ink2)}
+.hstat.hcoin{margin-left:auto; background:var(--b-bg); color:var(--b); padding:4px 10px; border-radius:99px}
+.hlv{white-space:nowrap}
+.hxpbar{width:70px; height:7px; border-radius:99px; background:var(--line); overflow:hidden; display:inline-block}
+.hxpbar i{display:block; height:100%; background:var(--a); transition:width .4s}
+@media (max-width:420px){ .hbrand{font-size:15px} .hxpbar{width:46px} }
+/* ============================================================
+   Game UI
+   ============================================================ */
+.mapwrap{padding-block:12px 32px}
+.hero{padding:22px 4px 8px}
+.hero h1{font:800 clamp(30px,7vw,48px)/1.05 var(--f-display); letter-spacing:-.03em; margin:0 0 10px}
+.herotxt{color:var(--ink2); max-width:60ch}
+.herostats{display:flex; gap:22px; margin-top:14px; flex-wrap:wrap}
+.herostats div{display:flex; flex-direction:column}
+.herostats b{font:800 24px var(--f-display)}
+.herostats span{font:600 11px var(--f-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--ink2)}
+
+.path{display:flex; flex-direction:column; gap:22px; margin-top:18px}
+.worldsec{border:1.5px solid var(--line); background:var(--paper); border-radius:18px; padding:16px 16px 18px; position:relative; overflow:hidden}
+.worldsec::before{content:''; position:absolute; inset:0 0 auto 0; height:5px; background:var(--_c,var(--s))}
+.worldsec.g-s::before{background:var(--s)} .worldsec.g-k::before{background:var(--k)} .worldsec.g-a::before{background:var(--a)}
+.worldsec.g-b::before{background:var(--b)} .worldsec.g-warn::before{background:var(--warn)}
+.wsechead{display:flex; align-items:center; gap:12px; margin-bottom:12px}
+.wicon{font-size:28px; line-height:1}
+.wicon.big{font-size:44px}
+.wsechead h2{font:800 18px var(--f-display); margin:0}
+.wsechead p{margin:2px 0 0; color:var(--ink2); font-size:13px}
+.wstars{margin-left:auto}
+.stars{display:inline-flex; gap:1px}
+.star{color:var(--line); font-size:15px}
+.star.on{color:var(--hl)}
+
+.stagerow{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+.finalesec .stagerow{grid-template-columns:1fr}
+.node{appearance:none; cursor:pointer; border:1.5px solid var(--line); background:var(--bg); border-radius:14px; padding:14px 10px;
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:4px; min-height:108px; transition:transform .12s, border-color .15s}
+.node:hover:not(:disabled){border-color:var(--ink2); transform:translateY(-2px)}
+.node:disabled{opacity:.55; cursor:not-allowed}
+.node.done{background:var(--a-bg); border-color:var(--a)}
+.node.ready{border-color:var(--s); box-shadow:0 0 0 2px color-mix(in srgb,var(--s) 25%, transparent)}
+.nicon{font-size:24px}
+.nlabel{font:700 13px var(--f-body)}
+.nhint{font:500 11px var(--f-body); color:var(--ink2)}
+.examnode{min-height:80px; flex-direction:row; justify-content:flex-start; gap:14px; text-align:left; padding:16px 18px}
+.examnode .nlabel{font-size:15px}
+
+/* ---- Intro-Screen ---- */
+.introwrap{padding-block:16px 40px; max-width:560px; margin-inline:auto}
+.backlnk{appearance:none; border:0; background:none; cursor:pointer; color:var(--ink2); font:700 13px var(--f-body); padding:6px 0; margin-bottom:10px}
+.introcard{border:1.5px solid var(--line); background:var(--paper); border-radius:20px; padding:32px 24px; text-align:center}
+.introcard h2{font-size:26px; margin:6px 0 10px}
+.introcard p{margin-inline:auto; color:var(--ink2)}
+.examchoices{display:flex; flex-direction:column; gap:10px; margin-top:18px}
+
+/* ---- Stage-Runner ---- */
+.stagewrap{padding-block:14px 40px; max-width:640px; margin-inline:auto; position:relative}
+.stagehead{display:flex; align-items:center; gap:12px; margin-bottom:10px}
+.stagehead .backlnk{margin:0; font-size:18px}
+.qprog{flex:1; height:7px; border-radius:99px; background:var(--line); overflow:hidden}
+.qprog i{display:block; height:100%; background:var(--s); transition:width .3s}
+.lives, .mtime, .examn{font:700 13px var(--f-mono); white-space:nowrap; color:var(--ink2)}
+.streakbadge{display:inline-block; background:var(--warn-bg); color:var(--warn); font:800 12px var(--f-mono); padding:4px 10px; border-radius:99px; margin-bottom:8px}
+.streakbadge.hot{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.timerbar{height:5px; border-radius:99px; background:var(--line); overflow:hidden; margin-bottom:14px}
+.timerbar i{display:block; height:100%; background:var(--warn); transition:width .1s linear}
+.qtext{font:700 clamp(19px,4vw,24px)/1.3 var(--f-display); margin:0 0 16px}
+.qcount{color:var(--ink2); font:600 12px var(--f-mono); margin-top:10px}
+.opts{display:grid; gap:10px}
+.opt{appearance:none; cursor:pointer; text-align:left; border:1.5px solid var(--line); background:var(--paper); color:var(--ink);
+  font:600 15px var(--f-body); padding:13px 16px; border-radius:12px; transition:border-color .15s, background .15s}
+.opt:hover:not(:disabled){border-color:var(--s)}
+.opt:disabled{cursor:default}
+.opt.correct{background:var(--a-bg); border-color:var(--a); color:var(--a)}
+.opt.wrong{background:var(--warn-bg); border-color:var(--warn); color:var(--warn)}
+.expl{margin-top:14px; padding:13px 16px; border-radius:12px; border:1.5px solid var(--line); background:var(--bg); font-size:14px; line-height:1.5}
+.expl.ok{border-color:var(--a); background:var(--a-bg)}
+.expl.no{border-color:var(--warn); background:var(--warn-bg)}
+.expl code{display:inline-block; margin-top:4px}
+.nextrow{margin-top:12px}
+.nextrow .btn{width:100%}
+
+/* ---- Ergebnis-Karte ---- */
+.resultcard{border:1.5px solid var(--line); background:var(--paper); border-radius:20px; padding:36px 24px; text-align:center; position:relative; overflow:hidden; margin-top:10px}
+.resultcard.win{border-color:var(--a)}
+.resultcard.lose{border-color:var(--warn)}
+.ricon{font-size:44px; display:block; margin-bottom:8px}
+.resultcard h2{font-size:24px}
+.resultcard .stars{justify-content:center; margin:10px 0}
+.resultcard .stars .star{font-size:26px}
+.rewards{font:800 15px var(--f-mono); color:var(--b)}
+.rbtns{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap}
+.confwrap{position:absolute; inset:0; pointer-events:none; overflow:hidden}
+.confetti{position:absolute; top:40%; left:50%; width:8px; height:8px; border-radius:2px;
+  transform:translate(calc(var(--x,0)*140px), 0) rotate(var(--r,0deg));
+  animation:confetti var(--d,0.9s) ease-out forwards}
+@keyframes confetti{ from{ opacity:1; transform:translate(calc(var(--x,0)*20px), -10px) rotate(0deg);} to{ opacity:0; transform:translate(calc(var(--x,0)*160px), 220px) rotate(var(--r,180deg));} }
+
+/* ---- Match ---- */
+.matchgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px 10px; margin-top:10px}
+.mitem{appearance:none; cursor:pointer; text-align:left; border:1.5px solid var(--line); background:var(--paper); color:var(--ink);
+  font:600 13.5px/1.35 var(--f-body); padding:11px 12px; border-radius:11px; min-height:52px; display:flex; align-items:center}
+.mitem:hover:not(:disabled){border-color:var(--s)}
+.mitem.sel{border-color:var(--s); background:var(--s-bg); box-shadow:0 0 0 2px var(--s)}
+.mitem.done{background:var(--a-bg); border-color:var(--a); color:var(--a); opacity:.8}
+.mitem.shake{animation:shake .4s}
+@keyframes shake{ 10%,90%{transform:translateX(-3px)} 20%,80%{transform:translateX(4px)} 30%,50%,70%{transform:translateX(-6px)} 40%,60%{transform:translateX(6px)} }
+
+/* ---- SQL-Werkstatt ---- */
+.attemptct{font:700 13px var(--f-mono); color:var(--ink2); white-space:nowrap}
+.sqlintro{background:var(--hl-bg); color:var(--b); border-radius:12px; padding:10px 14px; font-size:13.5px; font-weight:600; margin:0 0 10px}
+.sqltask{background:var(--bg); border:1.5px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px; font-size:15.5px; line-height:1.5}
+.refrow{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px}
+.refrow .schemabox{flex:1 1 220px; margin-bottom:0}
+.schemabox{border:1.5px dashed var(--line); border-radius:12px; padding:8px 12px}
+.schemabox summary{cursor:pointer; font:700 13px var(--f-body); color:var(--ink2); padding:4px 0}
+.schemas{display:flex; gap:14px; overflow-x:auto; padding:8px 2px}
+.schemat{flex:0 0 auto; min-width:180px}
+.schemat h5{margin:0 0 4px; font:700 12px var(--f-mono); color:var(--ink2)}
+.schemat h5 span{font-weight:400}
+.cheats{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px; padding:8px 2px}
+.cheatcard{background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:8px 10px}
+.cheatcard h6{margin:0 0 4px; font:700 11.5px var(--f-body); color:var(--ink2)}
+.cheatcard pre{margin:0; font:12px/1.5 var(--f-mono); color:var(--ink); white-space:pre-wrap; word-break:break-word}
+.tblwrap{overflow-x:auto; border:1px solid var(--line); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:12.5px}
+th,td{padding:5px 9px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap}
+th{background:var(--bg); font:700 11px var(--f-mono); text-transform:uppercase; letter-spacing:.03em; color:var(--ink2)}
+td i{color:var(--ink2); font-style:italic}
+.restbl{font-size:13.5px}
+.sqlin{width:100%; min-height:92px; font:14px/1.5 var(--f-mono); background:var(--code-bg); color:var(--code-ink);
+  border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; resize:vertical}
+.sqlin:focus{outline:2px solid var(--s); outline-offset:1px}
+.sqlbtns{display:flex; gap:8px; margin:10px 0; flex-wrap:wrap}
+.hintbtn:disabled{opacity:.4}
+.solbtn{border-color:var(--k); color:var(--k)}
+.sqlout{margin-bottom:6px}
+.sqlmsg{font:600 13.5px var(--f-body); padding:8px 0}
+.sqlmsg.err{color:var(--warn)}
+.sqlmsg.ok{color:var(--a)}
+.sqlmsg.warn{color:var(--b)}
+.rowcount{color:var(--ink2); font:600 11px var(--f-mono); margin:4px 0 0}
+.hintout{margin-top:6px}
+.hintline{background:var(--b-bg); color:var(--b); border-radius:10px; padding:9px 12px; font-size:13.5px; margin:0 0 6px}
+.hintline.solreveal{background:var(--k-bg); color:var(--k)}
+.hintline.nudge{background:var(--s-bg); color:var(--s)}
+
+/* ---- Exam / Prüfungsarena ---- */
+.worldbars{display:grid; gap:10px; margin:16px 0; text-align:left}
+.wbar{display:grid; grid-template-columns:150px 1fr 40px; align-items:center; gap:8px 10px; font-size:12.5px}
+.wblabel{color:var(--ink2); line-height:1.25}
+.wbtrack{height:8px; border-radius:99px; background:var(--line); overflow:hidden}
+.wbtrack i{display:block; height:100%; background:var(--a)}
+.wbtrack i.low{background:var(--warn)}
+.wbpct{font:700 12px var(--f-mono); text-align:right}
+.weaktip{background:var(--warn-bg); color:var(--warn); border-radius:10px; padding:10px 14px; font-weight:700; font-size:13.5px}
+.weaktip.ok{background:var(--a-bg); color:var(--a)}
+@media (max-width:480px){ .wbar{grid-template-columns:1fr 40px} .wblabel{grid-column:1/-1}}
+
+/* ---- Toast ---- */
+.toast{position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--paper);
+  font:700 13.5px var(--f-body); padding:10px 18px; border-radius:99px; opacity:0; transition:opacity .25s, transform .25s; z-index:80; white-space:nowrap}
+.toast.ok{background:var(--a)}
+.toast.no{background:var(--warn)}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+@media (max-width:520px){
+  .stagerow{grid-template-columns:repeat(3,1fr); gap:7px}
+  .node{min-height:96px; padding:10px 6px}
+  .matchgrid{gap:7px 8px}
+}
+</style>
+<div class="top">
+  <div id="hud" class="hud"></div>
+</div>
+<main><div id="app"></div></main>
+<script>
+/* ============================================================
+   Mini-SQL-Engine — Tokenizer, Parser, Evaluator
+   Unterstützt: SELECT (DISTINCT, *, Ausdrücke, Aggregatfunktionen,
+   JOIN/INNER JOIN/LEFT JOIN, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT),
+   INSERT INTO ... VALUES, UPDATE ... SET ... WHERE, DELETE FROM ... WHERE.
+   Arbeitet auf einer einfachen In-Memory-DB: {TABLE:[{col:val,...},...]}
+   ============================================================ */
+(function(root){
+'use strict';
+
+/* ---------- Tokenizer ---------- */
+const KEYWORDS = new Set(['SELECT','FROM','WHERE','AND','OR','NOT','AS','JOIN','INNER','LEFT','RIGHT','OUTER',
+  'ON','GROUP','BY','HAVING','ORDER','ASC','DESC','LIMIT','DISTINCT','IN','IS','NULL','LIKE','BETWEEN',
+  'INSERT','INTO','VALUES','UPDATE','SET','DELETE','CREATE','TABLE','PRIMARY','KEY','FOREIGN','REFERENCES',
+  'NOT','DEFAULT','UNIQUE','TRUE','FALSE','UNION','ALL','EXISTS']);
+
+function tokenize(sql){
+  const toks = []; let i = 0; const n = sql.length;
+  const isDigit = c => c >= '0' && c <= '9';
+  const isAlpha = c => /[A-Za-zÄÖÜäöüß_]/.test(c);
+  const isAlnum = c => /[A-Za-z0-9ÄÖÜäöüß_]/.test(c);
+  while(i < n){
+    const c = sql[i];
+    if(/\s/.test(c)){ i++; continue; }
+    if(c === '-' && sql[i+1] === '-'){ while(i<n && sql[i] !== '\n') i++; continue; }
+    if(c === "'"){
+      let j = i+1, s = '';
+      while(j < n){
+        if(sql[j] === "'" && sql[j+1] === "'"){ s += "'"; j += 2; continue; }
+        if(sql[j] === "'") break;
+        s += sql[j]; j++;
+      }
+      toks.push({t:'str', v:s}); i = j+1; continue;
+    }
+    if(c === '"'){
+      let j = i+1, s = '';
+      while(j < n && sql[j] !== '"'){ s += sql[j]; j++; }
+      toks.push({t:'ident', v:s}); i = j+1; continue;
+    }
+    if(isDigit(c) || (c === '.' && isDigit(sql[i+1]))){
+      let j = i, s = '';
+      while(j < n && (isDigit(sql[j]) || sql[j] === '.')){ s += sql[j]; j++; }
+      toks.push({t:'num', v:parseFloat(s)}); i = j; continue;
+    }
+    if(isAlpha(c)){
+      let j = i, s = '';
+      while(j < n && isAlnum(sql[j])){ s += sql[j]; j++; }
+      const up = s.toUpperCase();
+      if(KEYWORDS.has(up)) toks.push({t:'kw', v:up});
+      else toks.push({t:'ident', v:s});
+      i = j; continue;
+    }
+    if(c === '<' && sql[i+1] === '='){ toks.push({t:'op', v:'<='}); i+=2; continue; }
+    if(c === '>' && sql[i+1] === '='){ toks.push({t:'op', v:'>='}); i+=2; continue; }
+    if(c === '<' && sql[i+1] === '>'){ toks.push({t:'op', v:'!='}); i+=2; continue; }
+    if(c === '!' && sql[i+1] === '='){ toks.push({t:'op', v:'!='}); i+=2; continue; }
+    if('=<>+-*/,.()'.includes(c)){ toks.push({t: (c===','||c==='('||c===')'||c==='.') ? 'punc' : 'op', v:c}); i++; continue; }
+    if(c === ';'){ i++; continue; }
+    throw new SqlError("Unerwartetes Zeichen: '"+c+"'");
+  }
+  toks.push({t:'eof', v:null});
+  return toks;
+}
+
+class SqlError extends Error {}
+
+/* ---------- Parser ---------- */
+class Parser {
+  constructor(toks){ this.toks = toks; this.p = 0; }
+  peek(){ return this.toks[this.p]; }
+  next(){ return this.toks[this.p++]; }
+  isKw(v){ const t = this.peek(); return t.t === 'kw' && t.v === v; }
+  isOp(v){ const t = this.peek(); return (t.t === 'op' || t.t === 'punc') && t.v === v; }
+  eatKw(v){ if(!this.isKw(v)) throw new SqlError('Erwartet: '+v+', gefunden: '+this._show()); return this.next(); }
+  eatOp(v){ if(!this.isOp(v)) throw new SqlError('Erwartet: "'+v+'", gefunden: '+this._show()); return this.next(); }
+  _show(){ const t = this.peek(); return t.t==='eof' ? 'Ende' : JSON.stringify(t.v); }
+
+  parseStatement(){
+    if(this.isKw('SELECT')) return this.parseSelect();
+    if(this.isKw('INSERT')) return this.parseInsert();
+    if(this.isKw('UPDATE')) return this.parseUpdate();
+    if(this.isKw('DELETE')) return this.parseDelete();
+    if(this.isKw('CREATE')) return this.parseCreate();
+    throw new SqlError('Unbekannte Anweisung (erwarte SELECT/INSERT/UPDATE/DELETE/CREATE): '+this._show());
+  }
+
+  parseIdentPath(){
+    // ident[.ident] oder *
+    if(this.isOp('*')){ this.next(); return {type:'star'}; }
+    const first = this.next();
+    if(first.t !== 'ident' && first.t !== 'kw') throw new SqlError('Bezeichner erwartet, gefunden: '+JSON.stringify(first.v));
+    let name = first.v;
+    if(this.isOp('.')){
+      this.next();
+      if(this.isOp('*')){ this.next(); return {type:'star', table:name}; }
+      const second = this.next();
+      return {type:'col', table:name, col:second.v};
+    }
+    return {type:'col', table:null, col:name};
+  }
+
+  parseSelect(){
+    this.eatKw('SELECT');
+    let distinct = false;
+    if(this.isKw('DISTINCT')){ this.next(); distinct = true; }
+    const cols = [];
+    do{
+      if(this.isOp(',')) this.next();
+      cols.push(this.parseSelectItem());
+    } while(this.isOp(','));
+    this.eatKw('FROM');
+    const from = this.parseTableRef();
+    const joins = [];
+    while(this.isKw('JOIN') || this.isKw('INNER') || this.isKw('LEFT') || this.isKw('RIGHT')){
+      let jt = 'INNER';
+      if(this.isKw('LEFT')){ jt='LEFT'; this.next(); if(this.isKw('OUTER')) this.next(); }
+      else if(this.isKw('RIGHT')){ jt='RIGHT'; this.next(); if(this.isKw('OUTER')) this.next(); }
+      else if(this.isKw('INNER')){ jt='INNER'; this.next(); }
+      this.eatKw('JOIN');
+      const tbl = this.parseTableRef();
+      this.eatKw('ON');
+      const on = this.parseExprOr();
+      joins.push({type:jt, table:tbl, on});
+    }
+    let where = null;
+    if(this.isKw('WHERE')){ this.next(); where = this.parseExprOr(); }
+    let groupBy = null;
+    if(this.isKw('GROUP')){ this.next(); this.eatKw('BY'); groupBy = []; do{ if(this.isOp(',')) this.next(); groupBy.push(this.parseIdentPath()); } while(this.isOp(',')); }
+    let having = null;
+    if(this.isKw('HAVING')){ this.next(); having = this.parseExprOr(); }
+    let orderBy = null;
+    if(this.isKw('ORDER')){ this.next(); this.eatKw('BY'); orderBy = []; do{
+        if(this.isOp(',')) this.next();
+        const e = this.parseAddSub();
+        let dir = 'ASC';
+        if(this.isKw('ASC')){ this.next(); } else if(this.isKw('DESC')){ this.next(); dir='DESC'; }
+        orderBy.push({expr:e, dir});
+      } while(this.isOp(','));
+    }
+    let limit = null;
+    if(this.isKw('LIMIT')){ this.next(); const t = this.next(); limit = t.v; }
+    return {type:'select', distinct, cols, from, joins, where, groupBy, having, orderBy, limit};
+  }
+
+  parseSelectItem(){
+    const e = this.parseAddSub();
+    let alias = null;
+    if(this.isKw('AS')){ this.next(); alias = this.next().v; }
+    else if(this.peek().t === 'ident'){ alias = this.next().v; }
+    return {expr:e, alias};
+  }
+
+  parseTableRef(){
+    const nameTok = this.next();
+    const name = nameTok.v;
+    let alias = null;
+    if(this.isKw('AS')){ this.next(); alias = this.next().v; }
+    else if(this.peek().t === 'ident'){ alias = this.next().v; }
+    return {name, alias};
+  }
+
+  // Ausdrücke (Booleans mit OR/AND/NOT, Vergleich, +-*/, Funktionen)
+  parseExprOr(){
+    let left = this.parseExprAnd();
+    while(this.isKw('OR')){ this.next(); const right = this.parseExprAnd(); left = {op:'OR', l:left, r:right}; }
+    return left;
+  }
+  parseExprAnd(){
+    let left = this.parseExprNot();
+    while(this.isKw('AND')){ this.next(); const right = this.parseExprNot(); left = {op:'AND', l:left, r:right}; }
+    return left;
+  }
+  parseExprNot(){
+    if(this.isKw('NOT')){ this.next(); return {op:'NOT', e:this.parseExprNot()}; }
+    return this.parsePredicate();
+  }
+  parsePredicate(){
+    if(this.isOp('(')){
+      // Könnte geklammerter Bool-Ausdruck sein
+      const save = this.p;
+      this.next();
+      try{
+        const inner = this.parseExprOr();
+        if(this.isOp(')')){ this.next(); return this.maybeChainAfterParen(inner); }
+      }catch(e){}
+      this.p = save;
+    }
+    const left = this.parseAddSub();
+    if(this.isKw('IS')){
+      this.next();
+      let neg = false;
+      if(this.isKw('NOT')){ this.next(); neg = true; }
+      this.eatKw('NULL');
+      return {op: neg?'ISNOTNULL':'ISNULL', e:left};
+    }
+    if(this.isKw('NOT')){
+      this.next();
+      if(this.isKw('LIKE')){ this.next(); const r = this.parseAddSub(); return {op:'NOT', e:{op:'LIKE', l:left, r}}; }
+      if(this.isKw('IN')){ this.next(); const list = this.parseInList(); return {op:'NOT', e:{op:'IN', l:left, r:list}}; }
+      if(this.isKw('BETWEEN')){ this.next(); const lo=this.parseAddSub(); this.eatKw('AND'); const hi=this.parseAddSub(); return {op:'NOT', e:{op:'BETWEEN', e:left, lo, hi}}; }
+      throw new SqlError('NOT ... erwartet LIKE/IN/BETWEEN');
+    }
+    if(this.isKw('LIKE')){ this.next(); const r = this.parseAddSub(); return {op:'LIKE', l:left, r}; }
+    if(this.isKw('IN')){ this.next(); const list = this.parseInList(); return {op:'IN', l:left, r:list}; }
+    if(this.isKw('BETWEEN')){ this.next(); const lo=this.parseAddSub(); this.eatKw('AND'); const hi=this.parseAddSub(); return {op:'BETWEEN', e:left, lo, hi}; }
+    const t = this.peek();
+    if(t.t === 'op' && ['=','!=','<','>','<=','>='].includes(t.v)){
+      this.next();
+      const right = this.parseAddSub();
+      return {op:'CMP', cmp:t.v, l:left, r:right};
+    }
+    return left; // roher Ausdruck (z.B. Spalte als boolescher Kontext, selten)
+  }
+  maybeChainAfterParen(inner){ return inner; }
+  parseInList(){
+    this.eatOp('(');
+    const items = [];
+    do{ if(this.isOp(',')) this.next(); items.push(this.parseAddSub()); } while(this.isOp(','));
+    this.eatOp(')');
+    return items;
+  }
+
+  parseAddSub(){
+    let left = this.parseMulDiv();
+    while(this.isOp('+') || this.isOp('-')){
+      const op = this.next().v;
+      const right = this.parseMulDiv();
+      left = {op:'ARITH', a:op, l:left, r:right};
+    }
+    return left;
+  }
+  parseMulDiv(){
+    let left = this.parseUnary();
+    while(this.isOp('*') || this.isOp('/')){
+      const op = this.next().v;
+      const right = this.parseUnary();
+      left = {op:'ARITH', a:op, l:left, r:right};
+    }
+    return left;
+  }
+  parseUnary(){
+    if(this.isOp('-')){ this.next(); const e = this.parseUnary(); return {op:'NEG', e}; }
+    return this.parsePrimary();
+  }
+  parsePrimary(){
+    const t = this.peek();
+    if(t.t === 'num'){ this.next(); return {op:'LIT', v:t.v}; }
+    if(t.t === 'str'){ this.next(); return {op:'LIT', v:t.v}; }
+    if(this.isKw('NULL')){ this.next(); return {op:'LIT', v:null}; }
+    if(this.isKw('TRUE')){ this.next(); return {op:'LIT', v:true}; }
+    if(this.isKw('FALSE')){ this.next(); return {op:'LIT', v:false}; }
+    if(this.isOp('(')){
+      this.next();
+      const e = this.parseExprOr();
+      this.eatOp(')');
+      return e;
+    }
+    if(this.isOp('*')){ this.next(); return {op:'STAR'}; }
+    // Funktion oder Spalte
+    if(t.t === 'ident' || t.t === 'kw'){
+      const nameTok = this.next();
+      const name = nameTok.v;
+      if(this.isOp('(')){
+        this.next();
+        let distinct = false;
+        if(this.isKw('DISTINCT')){ this.next(); distinct = true; }
+        const args = [];
+        if(!this.isOp(')')){
+          do{ if(this.isOp(',')) this.next(); args.push(this.isOp('*') ? (this.next(), {op:'STAR'}) : this.parseExprOr()); } while(this.isOp(','));
+        }
+        this.eatOp(')');
+        return {op:'FUNC', name:name.toUpperCase(), args, distinct};
+      }
+      if(this.isOp('.')){
+        this.next();
+        const col = this.next();
+        return {op:'COL', table:name, col: col.v};
+      }
+      return {op:'COL', table:null, col:name};
+    }
+    throw new SqlError('Unerwarteter Ausdruck: '+this._show());
+  }
+
+  parseInsert(){
+    this.eatKw('INSERT'); this.eatKw('INTO');
+    const table = this.next().v;
+    let cols = null;
+    if(this.isOp('(')){
+      this.next(); cols = [];
+      do{ if(this.isOp(',')) this.next(); cols.push(this.next().v); } while(this.isOp(','));
+      this.eatOp(')');
+    }
+    this.eatKw('VALUES');
+    const rows = [];
+    do{
+      if(this.isOp(',')) this.next();
+      this.eatOp('(');
+      const vals = [];
+      do{ if(this.isOp(',')) this.next(); vals.push(this.parseAddSub()); } while(this.isOp(','));
+      this.eatOp(')');
+      rows.push(vals);
+    } while(this.isOp(','));
+    return {type:'insert', table, cols, rows};
+  }
+
+  parseUpdate(){
+    this.eatKw('UPDATE');
+    const table = this.next().v;
+    this.eatKw('SET');
+    const sets = [];
+    do{
+      if(this.isOp(',')) this.next();
+      const col = this.next().v;
+      this.eatOp('=');
+      const val = this.parseAddSub();
+      sets.push({col, val});
+    } while(this.isOp(','));
+    let where = null;
+    if(this.isKw('WHERE')){ this.next(); where = this.parseExprOr(); }
+    return {type:'update', table, sets, where};
+  }
+
+  parseDelete(){
+    this.eatKw('DELETE'); this.eatKw('FROM');
+    const table = this.next().v;
+    let where = null;
+    if(this.isKw('WHERE')){ this.next(); where = this.parseExprOr(); }
+    return {type:'delete', table, where};
+  }
+
+  parseCreate(){
+    this.eatKw('CREATE'); this.eatKw('TABLE');
+    const table = this.next().v;
+    this.eatOp('(');
+    const cols = [];
+    do{
+      if(this.isOp(',')) this.next();
+      if(this.isKw('PRIMARY')){ this.next(); this.eatKw('KEY'); this.eatOp('('); const pk=[]; do{ if(this.isOp(',')) this.next(); pk.push(this.next().v); }while(this.isOp(',')); this.eatOp(')'); cols.push({kind:'PK', cols:pk}); continue; }
+      if(this.isKw('FOREIGN')){ this.next(); this.eatKw('KEY'); this.eatOp('('); const fk=[]; do{ if(this.isOp(',')) this.next(); fk.push(this.next().v); }while(this.isOp(',')); this.eatOp(')'); this.eatKw('REFERENCES'); const rt=this.next().v; let rc=null; if(this.isOp('(')){ this.next(); rc=this.next().v; this.eatOp(')'); } cols.push({kind:'FK', cols:fk, refTable:rt, refCol:rc}); continue; }
+      const cname = this.next().v;
+      let ctype = this.next().v; // e.g. INT, VARCHAR
+      if(this.isOp('(')){ this.next(); while(!this.isOp(')')) this.next(); this.next(); }
+      const flags = [];
+      while(true){
+        if(this.isKw('PRIMARY')){ this.next(); this.eatKw('KEY'); flags.push('PK'); continue; }
+        if(this.isKw('NOT')){ this.next(); this.eatKw('NULL'); flags.push('NOTNULL'); continue; }
+        if(this.isKw('NULL')){ this.next(); continue; }
+        if(this.isKw('UNIQUE')){ this.next(); flags.push('UNIQUE'); continue; }
+        if(this.isKw('DEFAULT')){ this.next(); this.parseAddSub(); flags.push('DEFAULT'); continue; }
+        if(this.isKw('REFERENCES')){ this.next(); const rt=this.next().v; let rc=null; if(this.isOp('(')){ this.next(); rc=this.next().v; this.eatOp(')'); } flags.push('FK:'+rt+(rc?'.'+rc:'')); continue; }
+        break;
+      }
+      cols.push({kind:'COL', name:cname, dtype:String(ctype).toUpperCase(), flags});
+    } while(this.isOp(','));
+    this.eatOp(')');
+    return {type:'create', table, cols};
+  }
+}
+
+function parseSQL(sql){
+  const toks = tokenize(sql);
+  const p = new Parser(toks);
+  const stmt = p.parseStatement();
+  if(p.peek().t !== 'eof') throw new SqlError('Unerwartete Zeichen nach Anweisung: '+p._show());
+  return stmt;
+}
+
+/* ---------- Evaluator ---------- */
+function cloneDb(db){
+  const out = {};
+  for(const k in db) out[k] = db[k].map(r => Object.assign({}, r));
+  return out;
+}
+
+function findTable(db, name){
+  const key = Object.keys(db).find(k => k.toUpperCase() === String(name).toUpperCase());
+  if(!key) throw new SqlError('Unbekannte Tabelle: '+name);
+  return {key, rows: db[key]};
+}
+
+// env: {tableAliasUpper: rowObjectOrNull, ...}, plus __agg for aggregate context
+function resolveCol(env, table, col){
+  if(table){
+    const key = Object.keys(env).find(k => k.toUpperCase() === table.toUpperCase());
+    if(!key) throw new SqlError('Unbekannter Tabellen-Alias: '+table);
+    const row = env[key];
+    if(row == null) return null;
+    const ck = Object.keys(row).find(k => k.toUpperCase() === col.toUpperCase());
+    return ck ? row[ck] : null;
+  }
+  // Suche in allen Tabellen des Envs
+  let found, count = 0;
+  for(const k in env){
+    const row = env[k];
+    if(row == null) continue;
+    const ck = Object.keys(row).find(x => x.toUpperCase() === col.toUpperCase());
+    if(ck){ found = row[ck]; count++; }
+  }
+  if(count === 0) return null;
+  return found;
+}
+
+function evalExpr(e, env){
+  switch(e.op){
+    case 'LIT': return e.v;
+    case 'COL': return resolveCol(env, e.table, e.col);
+    case 'STAR': return '*';
+    case 'NEG': return -evalExpr(e.e, env);
+    case 'ARITH': {
+      const l = evalExpr(e.l, env), r = evalExpr(e.r, env);
+      if(l == null || r == null) return null;
+      switch(e.a){ case '+': return l+r; case '-': return l-r; case '*': return l*r; case '/': return r===0?null:l/r; }
+      return null;
+    }
+    case 'AND': { const l = evalExpr(e.l, env); if(l===false) return false; const r = evalExpr(e.r, env); return !!(l && r); }
+    case 'OR': { const l = evalExpr(e.l, env); if(l===true) return true; const r = evalExpr(e.r, env); return !!(l || r); }
+    case 'NOT': { const v = evalExpr(e.e, env); return v==null ? null : !v; }
+    case 'CMP': {
+      const l = evalExpr(e.l, env), r = evalExpr(e.r, env);
+      if(l == null || r == null) return null;
+      const lv = (typeof l === 'string' && typeof r === 'string') ? l : l, rv = r;
+      switch(e.cmp){
+        case '=': return lv == rv;
+        case '!=': return lv != rv;
+        case '<': return lv < rv;
+        case '>': return lv > rv;
+        case '<=': return lv <= rv;
+        case '>=': return lv >= rv;
+      }
+      return null;
+    }
+    case 'ISNULL': return evalExpr(e.e, env) == null;
+    case 'ISNOTNULL': return evalExpr(e.e, env) != null;
+    case 'LIKE': {
+      const l = evalExpr(e.l, env); const r = evalExpr(e.r, env);
+      if(l == null || r == null) return null;
+      const pattern = '^'+String(r).replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/%/g,'.*').replace(/_/g,'.')+'$';
+      return new RegExp(pattern, 'i').test(String(l));
+    }
+    case 'IN': {
+      const l = evalExpr(e.l, env);
+      if(l == null) return null;
+      return e.r.some(x => evalExpr(x, env) == l);
+    }
+    case 'BETWEEN': {
+      const v = evalExpr(e.e, env), lo = evalExpr(e.lo, env), hi = evalExpr(e.hi, env);
+      if(v==null||lo==null||hi==null) return null;
+      return v >= lo && v <= hi;
+    }
+    case 'FUNC': {
+      // Nicht-aggregierte Funktionen (aggregate werden separat behandelt)
+      return evalFunc(e, env);
+    }
+  }
+  throw new SqlError('Kann Ausdruck nicht auswerten: '+JSON.stringify(e));
+}
+
+const AGG_FUNCS = new Set(['COUNT','SUM','AVG','MIN','MAX']);
+
+function evalFunc(e, env){
+  const name = e.name;
+  if(name === 'UPPER') return String(evalExpr(e.args[0], env) ?? '').toUpperCase();
+  if(name === 'LOWER') return String(evalExpr(e.args[0], env) ?? '').toLowerCase();
+  if(name === 'ROUND'){ const v = evalExpr(e.args[0], env); const d = e.args[1]?evalExpr(e.args[1],env):0; return v==null?null:Math.round(v*Math.pow(10,d))/Math.pow(10,d); }
+  if(AGG_FUNCS.has(name)) throw new SqlError('Aggregatfunktion '+name+' außerhalb eines gültigen Kontexts');
+  throw new SqlError('Unbekannte Funktion: '+name);
+}
+
+function evalAgg(e, rows){
+  const name = e.name;
+  let vals;
+  if(e.args.length === 1 && e.args[0].op === 'STAR'){
+    vals = rows.map(() => 1);
+  } else {
+    vals = rows.map(r => evalExpr(e.args[0], r));
+    if(e.distinct){ const seen = new Set(); vals = vals.filter(v => { const k=JSON.stringify(v); if(seen.has(k)) return false; seen.add(k); return true; }); }
+  }
+  const nonNull = vals.filter(v => v != null);
+  switch(name){
+    case 'COUNT': return e.args.length===1 && e.args[0].op==='STAR' ? rows.length : nonNull.length;
+    case 'SUM': return nonNull.length ? nonNull.reduce((a,b)=>a+b,0) : 0;
+    case 'AVG': return nonNull.length ? nonNull.reduce((a,b)=>a+b,0)/nonNull.length : null;
+    case 'MIN': return nonNull.length ? nonNull.reduce((a,b)=> b<a?b:a) : null;
+    case 'MAX': return nonNull.length ? nonNull.reduce((a,b)=> b>a?b:a) : null;
+  }
+  throw new SqlError('Unbekannte Aggregatfunktion: '+name);
+}
+
+function exprHasAgg(e){
+  if(!e || typeof e !== 'object') return false;
+  if(e.op === 'FUNC' && AGG_FUNCS.has(e.name)) return true;
+  for(const k of ['l','r','e','lo','hi']) if(e[k] && exprHasAgg(e[k])) return true;
+  if(e.args) for(const a of e.args) if(exprHasAgg(a)) return true;
+  return false;
+}
+
+function colLabel(item, idx){
+  if(item.alias) return item.alias;
+  const e = item.expr;
+  if(e.op === 'COL') return e.col;
+  if(e.op === 'FUNC') return e.name.toLowerCase()+'('+(e.args.length===1&&e.args[0].op==='STAR'?'*':(e.args[0].op==='COL'?e.args[0].col:'…'))+')';
+  return 'col'+(idx+1);
+}
+
+function makeEnvFromRow(tableKey, row){ const env = {}; env[tableKey] = row; return env; }
+function mergeEnv(a, b){ return Object.assign({}, a, b); }
+
+function runSelect(stmt, db){
+  const {key: fromKey, rows: fromRows} = findTable(db, stmt.from.name);
+  const fromAlias = stmt.from.alias || stmt.from.name;
+  let combined = fromRows.map(r => makeEnvFromRow(fromAlias, r));
+
+  for(const j of stmt.joins){
+    const {rows: joinRows} = findTable(db, j.table.name);
+    const joinAlias = j.table.alias || j.table.name;
+    const next = [];
+    for(const leftEnv of combined){
+      let matched = false;
+      for(const r of joinRows){
+        const env = mergeEnv(leftEnv, makeEnvFromRow(joinAlias, r));
+        let ok;
+        try{ ok = evalExpr(j.on, env); } catch(err){ ok = false; }
+        if(ok){ matched = true; next.push(env); }
+      }
+      if(!matched && j.type === 'LEFT'){
+        const nullRow = {}; // alle Spaltennamen unbekannt -> resolveCol gibt null zurück, da env[alias]=null
+        next.push(mergeEnv(leftEnv, {[joinAlias]: null}));
+      }
+    }
+    combined = next;
+  }
+
+  if(stmt.where){
+    combined = combined.filter(env => {
+      try{ return evalExpr(stmt.where, env) === true; } catch(err){ return false; }
+    });
+  }
+
+  const hasAgg = stmt.cols.some(c => exprHasAgg(c.expr)) || (stmt.having && exprHasAgg(stmt.having));
+
+  let groups;
+  if(stmt.groupBy && stmt.groupBy.length){
+    const map = new Map();
+    for(const env of combined){
+      const keyParts = stmt.groupBy.map(g => resolveCol(env, g.table, g.col));
+      const key = JSON.stringify(keyParts);
+      if(!map.has(key)) map.set(key, {keyParts, rows:[]});
+      map.get(key).rows.push(env);
+    }
+    groups = [...map.values()];
+  } else if(hasAgg){
+    groups = [{keyParts:[], rows: combined}];
+  } else {
+    groups = combined.map(env => ({keyParts:[], rows:[env], single:env}));
+  }
+
+  let outRows = groups.map(g => {
+    const rep = g.single || g.rows[0] || {};
+    return stmt.cols.map(c => {
+      if(exprHasAgg(c.expr)){
+        if(c.expr.op === 'FUNC' && AGG_FUNCS.has(c.expr.name)) return evalAgg(c.expr, g.rows);
+        return evalArithWithAgg(c.expr, g.rows);
+      }
+      if(c.expr.op === 'STAR'){ return '*ALLCOLS*'; }
+      return evalExpr(c.expr, rep);
+    });
+  });
+
+  // STAR-Expansion (SELECT * oder table.*)
+  const expandedCols = [];
+  stmt.cols.forEach((c, idx) => {
+    if(c.expr.op === 'STAR'){
+      if(c.expr.table){
+        const {rows} = findTable(db, resolveAliasTableName(stmt, c.expr.table));
+        const sampleRow = fromRows[0] || {};
+        Object.keys(rowSampleFor(stmt, db, c.expr.table)).forEach(k => expandedCols.push({label:k, src:{star:c.expr.table, col:k}}));
+      } else {
+        // alle Tabellen (from + joins) in Reihenfolge
+        const tables = [stmt.from, ...stmt.joins.map(j=>j.table)];
+        tables.forEach(t => {
+          const {rows} = findTable(db, t.name);
+          const sample = rows[0] || {};
+          Object.keys(sample).forEach(k => expandedCols.push({label:k, src:{star:t.alias||t.name, col:k}}));
+        });
+      }
+    } else {
+      expandedCols.push({label: colLabel(c, idx), src:{idx}});
+    }
+  });
+
+  // Falls STAR verwendet wurde, Zeilen neu aus combined (bzw. groups) bauen
+  const usesStar = stmt.cols.some(c => c.expr.op === 'STAR');
+  if(usesStar){
+    outRows = groups.map(g => {
+      const rep = g.single || g.rows[0] || {};
+      return expandedCols.map(ec => {
+        if(ec.src.idx !== undefined){
+          const c = stmt.cols[ec.src.idx];
+          if(exprHasAgg(c.expr)) return evalAgg(c.expr, g.rows);
+          return evalExpr(c.expr, rep);
+        }
+        return resolveCol(rep, ec.src.star, ec.src.col);
+      });
+    });
+  }
+
+  let columns = expandedCols.map(ec => ec.label);
+
+  // HAVING
+  if(stmt.having){
+    const keep = [];
+    groups.forEach((g, gi) => {
+      const rep = g.single || g.rows[0] || {};
+      const ok = evalHaving(stmt.having, g.rows, rep);
+      if(ok) keep.push(gi);
+    });
+    outRows = keep.map(i => outRows[i]);
+    groups = keep.map(i => groups[i]);
+  }
+
+  // ORDER BY
+  if(stmt.orderBy){
+    const idxOf = (expr) => {
+      if(expr.op === 'COL'){
+        const i = columns.findIndex(c => c.toUpperCase() === expr.col.toUpperCase());
+        if(i >= 0) return i;
+      }
+      return -1;
+    };
+    const keyFns = stmt.orderBy.map(ob => {
+      const i = idxOf(ob.expr);
+      return {i, dir: ob.dir, expr: ob.expr};
+    });
+    const decorated = outRows.map((row, ri) => ({row, ri, g: groups[ri]}));
+    decorated.sort((a,b) => {
+      for(const kf of keyFns){
+        let av, bv;
+        if(kf.i >= 0){ av = a.row[kf.i]; bv = b.row[kf.i]; }
+        else {
+          const repA = a.g.single || a.g.rows[0] || {};
+          const repB = b.g.single || b.g.rows[0] || {};
+          av = exprHasAgg(kf.expr) ? evalArithWithAgg(kf.expr, a.g.rows) : evalExpr(kf.expr, repA);
+          bv = exprHasAgg(kf.expr) ? evalArithWithAgg(kf.expr, b.g.rows) : evalExpr(kf.expr, repB);
+        }
+        let cmp;
+        if(av == null && bv == null) cmp = 0;
+        else if(av == null) cmp = -1;
+        else if(bv == null) cmp = 1;
+        else if(av < bv) cmp = -1;
+        else if(av > bv) cmp = 1;
+        else cmp = 0;
+        if(kf.dir === 'DESC') cmp = -cmp;
+        if(cmp !== 0) return cmp;
+      }
+      return 0;
+    });
+    outRows = decorated.map(d => d.row);
+  }
+
+  // DISTINCT
+  if(stmt.distinct){
+    const seen = new Set(); const uniq = [];
+    for(const r of outRows){ const k = JSON.stringify(r); if(!seen.has(k)){ seen.add(k); uniq.push(r); } }
+    outRows = uniq;
+  }
+
+  if(stmt.limit != null) outRows = outRows.slice(0, stmt.limit);
+
+  return {ok:true, type:'select', columns, rows: outRows};
+}
+
+function evalArithWithAgg(e, rows){
+  if(e.op === 'FUNC' && AGG_FUNCS.has(e.name)) return evalAgg(e, rows);
+  if(e.op === 'ARITH'){
+    const l = evalArithWithAgg(e.l, rows), r = evalArithWithAgg(e.r, rows);
+    if(l==null||r==null) return null;
+    switch(e.a){ case '+': return l+r; case '-': return l-r; case '*': return l*r; case '/': return r===0?null:l/r; }
+  }
+  if(e.op === 'LIT') return e.v;
+  return evalExpr(e, rows[0] || {});
+}
+function evalHaving(e, rows, rep){
+  switch(e.op){
+    case 'AND': return evalHaving(e.l, rows, rep) && evalHaving(e.r, rows, rep);
+    case 'OR': return evalHaving(e.l, rows, rep) || evalHaving(e.r, rows, rep);
+    case 'NOT': return !evalHaving(e.e, rows, rep);
+    case 'CMP': {
+      const l = exprHasAgg(e.l) ? evalArithWithAgg(e.l, rows) : evalExpr(e.l, rep);
+      const r = exprHasAgg(e.r) ? evalArithWithAgg(e.r, rows) : evalExpr(e.r, rep);
+      if(l==null||r==null) return false;
+      switch(e.cmp){ case '=': return l==r; case '!=': return l!=r; case '<': return l<r; case '>': return l>r; case '<=': return l<=r; case '>=': return l>=r; }
+      return false;
+    }
+    default: return !!evalExpr(e, rep);
+  }
+}
+function resolveAliasTableName(stmt, alias){
+  const tables = [stmt.from, ...stmt.joins.map(j=>j.table)];
+  const t = tables.find(t => (t.alias||t.name).toUpperCase() === alias.toUpperCase());
+  return t ? t.name : alias;
+}
+function rowSampleFor(stmt, db, alias){
+  const name = resolveAliasTableName(stmt, alias);
+  const {rows} = findTable(db, name);
+  return rows[0] || {};
+}
+
+function runInsert(stmt, db){
+  const {key} = findTable(db, stmt.table);
+  const existing = db[key];
+  const template = existing[0] || {};
+  const allCols = stmt.cols || Object.keys(template);
+  let inserted = 0;
+  for(const valExprs of stmt.rows){
+    if(valExprs.length !== allCols.length) throw new SqlError('Anzahl Werte passt nicht zur Anzahl Spalten');
+    const row = {};
+    allCols.forEach((c, i) => { row[c] = evalExpr(valExprs[i], {}); });
+    existing.push(row);
+    inserted++;
+  }
+  return {ok:true, type:'insert', affected: inserted, db};
+}
+
+function runUpdate(stmt, db){
+  const {key} = findTable(db, stmt.table);
+  const rows = db[key];
+  let affected = 0;
+  for(const row of rows){
+    const env = makeEnvFromRow(key, row);
+    let match = true;
+    if(stmt.where){ try{ match = evalExpr(stmt.where, env) === true; } catch(e){ match = false; } }
+    if(match){
+      for(const s of stmt.sets){
+        const ck = Object.keys(row).find(k => k.toUpperCase() === s.col.toUpperCase()) || s.col;
+        row[ck] = evalExpr(s.val, {});
+      }
+      affected++;
+    }
+  }
+  return {ok:true, type:'update', affected, db};
+}
+
+function runDelete(stmt, db){
+  const {key} = findTable(db, stmt.table);
+  const rows = db[key];
+  const kept = [];
+  let affected = 0;
+  for(const row of rows){
+    const env = makeEnvFromRow(key, row);
+    let match = true;
+    if(stmt.where){ try{ match = evalExpr(stmt.where, env) === true; } catch(e){ match = false; } }
+    if(match) affected++; else kept.push(row);
+  }
+  db[key] = kept;
+  return {ok:true, type:'delete', affected, db};
+}
+
+function runCreate(stmt, db){
+  const exists = Object.keys(db).some(k => k.toUpperCase() === stmt.table.toUpperCase());
+  if(exists) throw new SqlError('Tabelle existiert bereits: '+stmt.table);
+  db[stmt.table] = [];
+  return {ok:true, type:'create', table: stmt.table, columns: stmt.cols, db};
+}
+
+function run(sql, db, opts){
+  opts = opts || {};
+  const workDb = opts.mutate ? db : cloneDb(db);
+  try{
+    const stmt = parseSQL(sql);
+    let res;
+    if(stmt.type === 'select') res = runSelect(stmt, workDb);
+    else if(stmt.type === 'insert') res = runInsert(stmt, workDb);
+    else if(stmt.type === 'update') res = runUpdate(stmt, workDb);
+    else if(stmt.type === 'delete') res = runDelete(stmt, workDb);
+    else if(stmt.type === 'create') res = runCreate(stmt, workDb);
+    res.stmt = stmt;
+    res.dbAfter = workDb;
+    return res;
+  } catch(err){
+    return {ok:false, error: (err && err.message) || String(err)};
+  }
+}
+
+/* Ergebnisvergleich: Spaltenanzahl + Zeilen (multiset, außer ORDER BY vorgeschrieben) */
+function normVal(v){
+  if(v == null) return null;
+  if(typeof v === 'number') return Math.round(v*1e6)/1e6;
+  return String(v);
+}
+function compareResults(a, b, orderMatters){
+  if(!a || !a.ok || !b || !b.ok) return false;
+  if(a.type !== b.type) return false;
+  if(a.type === 'select'){
+    if(a.columns.length !== b.columns.length) return false;
+    if(a.rows.length !== b.rows.length) return false;
+    const na = a.rows.map(r => r.map(normVal));
+    const nb = b.rows.map(r => r.map(normVal));
+    if(orderMatters){
+      for(let i=0;i<na.length;i++){
+        if(JSON.stringify(na[i]) !== JSON.stringify(nb[i])) return false;
+      }
+      return true;
+    }
+    const sa = na.map(r=>JSON.stringify(r)).sort();
+    const sb = nb.map(r=>JSON.stringify(r)).sort();
+    return JSON.stringify(sa) === JSON.stringify(sb);
+  }
+  return a.affected === b.affected;
+}
+
+const SQLEngine = { run, parseSQL, cloneDb, compareResults, SqlError };
+if(typeof module !== 'undefined' && module.exports) module.exports = SQLEngine;
+else root.SQLEngine = SQLEngine;
+
+})(typeof window !== 'undefined' ? window : globalThis);
+/* ============================================================
+   SQL-Arena — Inhalte: Seed-DB, SQL-Aufgaben, Quiz/Match-Pools
+   ============================================================ */
+const SEED_DB = {
+  KUNDE: [
+    {kunde_id:1, name:'Anna Berger', ort:'Graz', plz:'8010'},
+    {kunde_id:2, name:'Tom Fischer', ort:'Wien', plz:'1010'},
+    {kunde_id:3, name:'Lena Huber', ort:'Graz', plz:'8020'},
+    {kunde_id:4, name:'Max Novak', ort:'Linz', plz:'4020'},
+    {kunde_id:5, name:'Nina Kogler', ort:'Wien', plz:'1030'},
+    {kunde_id:6, name:'Paul Steiner', ort:'Salzburg', plz:'5020'},
+  ],
+  ARTIKEL: [
+    {artikel_id:1, bezeichnung:'USB-Kabel', preis:9.90, kategorie:'Zubehör', lagerbestand:50},
+    {artikel_id:2, bezeichnung:'Maus', preis:19.90, kategorie:'Zubehör', lagerbestand:30},
+    {artikel_id:3, bezeichnung:'Monitor', preis:199.00, kategorie:'Hardware', lagerbestand:5},
+    {artikel_id:4, bezeichnung:'Tastatur', preis:39.50, kategorie:'Zubehör', lagerbestand:0},
+    {artikel_id:5, bezeichnung:'Laptop', preis:899.00, kategorie:'Hardware', lagerbestand:3},
+    {artikel_id:6, bezeichnung:'Kopfhörer', preis:59.00, kategorie:'Zubehör', lagerbestand:18},
+  ],
+  BESTELLUNG: [
+    {bestellung_id:1, kunde_id:1, datum:'2026-01-05', status:'geliefert'},
+    {bestellung_id:2, kunde_id:2, datum:'2026-01-06', status:'offen'},
+    {bestellung_id:3, kunde_id:1, datum:'2026-02-01', status:'offen'},
+    {bestellung_id:4, kunde_id:3, datum:'2026-02-10', status:'geliefert'},
+    {bestellung_id:5, kunde_id:5, datum:'2026-02-14', status:'storniert'},
+  ],
+  BESTELLPOSITION: [
+    {bestellung_id:1, artikel_id:1, menge:2},
+    {bestellung_id:1, artikel_id:3, menge:1},
+    {bestellung_id:2, artikel_id:2, menge:3},
+    {bestellung_id:3, artikel_id:4, menge:1},
+    {bestellung_id:4, artikel_id:5, menge:1},
+    {bestellung_id:4, artikel_id:6, menge:2},
+    {bestellung_id:5, artikel_id:2, menge:1},
+  ],
+};
+
+/* ---------- SQL-Spickzettel (immer sichtbare Referenz in der Werkstatt) ---------- */
+const SQL_CHEATSHEET = [
+  {t:'Spalten filtern', c:"SELECT spalte1, spalte2\nFROM TABELLE\nWHERE bedingung"},
+  {t:'Text vergleichen', c:"WHERE ort = 'Graz'   -- Text IMMER in ' '"},
+  {t:'Zahl vergleichen', c:"WHERE preis < 20     -- Zahlen OHNE ' '"},
+  {t:'Sortieren & begrenzen', c:"ORDER BY preis DESC\nLIMIT 3"},
+  {t:'Zwei Tabellen verknüpfen', c:"FROM A a\nJOIN B b ON a.id = b.a_id"},
+  {t:'Auch Zeilen ohne Treffer', c:"FROM A a\nLEFT JOIN B b ON a.id = b.a_id"},
+  {t:'Gruppieren & zählen', c:"SELECT spalte, COUNT(*) AS anzahl\nFROM TABELLE\nGROUP BY spalte"},
+  {t:'Gruppen filtern', c:"GROUP BY spalte\nHAVING SUM(menge) > 100   -- nicht WHERE!"},
+  {t:'Ohne Duplikate', c:"SELECT DISTINCT spalte FROM TABELLE"},
+  {t:'Neue Zeile einfügen', c:"INSERT INTO TABELLE (spalte1, spalte2)\nVALUES (wert1, wert2)"},
+  {t:'Werte ändern', c:"UPDATE TABELLE\nSET spalte = neuerWert\nWHERE bedingung   -- sonst ändert sich ALLES!"},
+  {t:'Zeilen löschen', c:"DELETE FROM TABELLE\nWHERE bedingung   -- sonst wird ALLES gelöscht!"},
+];
+
+/* ---------- SQL-Werkstatt Aufgaben ---------- */
+// type:'select' -> Ergebnis wird per compareResults verglichen
+// type:'write'   -> INSERT/UPDATE/DELETE, Tabellenzustand nach Ausführung wird verglichen
+const SQL_TASKS_W5 = [
+  {id:'s1', diff:1, type:'select', prompt:'Zeige die Spalten <b>name</b> und <b>ort</b> aller Kund*innen aus <b>Graz</b>.',
+    sol:"SELECT name, ort FROM KUNDE WHERE ort = 'Graz'",
+    hints:["Denk an WHERE für die Filterbedingung.", "Vergiss die Anführungszeichen bei Text nicht: 'Graz'."]},
+  {id:'s2', diff:1, type:'select', prompt:'Zeige <b>bezeichnung</b> und <b>preis</b> aller Artikel, die weniger als 20&nbsp;€ kosten.',
+    sol:"SELECT bezeichnung, preis FROM ARTIKEL WHERE preis < 20",
+    hints:["WHERE preis < 20", "Ohne Anführungszeichen, weil preis eine Zahl ist."]},
+  {id:'s3', diff:2, type:'select', prompt:'Zeige <b>bezeichnung</b> und <b>preis</b> der 3 teuersten Artikel — teuerster zuerst.',
+    sol:"SELECT bezeichnung, preis FROM ARTIKEL ORDER BY preis DESC LIMIT 3",
+    hints:["ORDER BY preis DESC sortiert absteigend.", "LIMIT 3 begrenzt auf drei Zeilen."], orderMatters:true},
+  {id:'s4', diff:2, type:'select', prompt:'Zeige für jede Bestellung den <b>Kundennamen</b> (name) und das <b>Bestelldatum</b> (datum). Spalten in dieser Reihenfolge.',
+    sol:"SELECT k.name, b.datum FROM KUNDE k JOIN BESTELLUNG b ON k.kunde_id = b.kunde_id",
+    hints:["Ein JOIN zwischen KUNDE und BESTELLUNG über kunde_id.", "SELECT k.name, b.datum FROM KUNDE k JOIN BESTELLUNG b ON k.kunde_id = b.kunde_id"]},
+  {id:'s5', diff:2, type:'select', prompt:'Welche Artikel (bezeichnung, menge) wurden in <b>Bestellung 1</b> bestellt?',
+    sol:"SELECT a.bezeichnung, bp.menge FROM ARTIKEL a JOIN BESTELLPOSITION bp ON a.artikel_id = bp.artikel_id WHERE bp.bestellung_id = 1",
+    hints:["JOIN ARTIKEL mit BESTELLPOSITION über artikel_id.", "Filtere zusätzlich mit WHERE bp.bestellung_id = 1."]},
+  {id:'s6', diff:3, type:'select', prompt:'Zeige für jede Bestellposition: <b>Kundenname</b> (name), <b>Artikelbezeichnung</b> (bezeichnung), <b>Menge</b> (menge). Vier Tabellen sind nötig.',
+    sol:"SELECT k.name, a.bezeichnung, bp.menge FROM KUNDE k JOIN BESTELLUNG b ON k.kunde_id = b.kunde_id JOIN BESTELLPOSITION bp ON b.bestellung_id = bp.bestellung_id JOIN ARTIKEL a ON bp.artikel_id = a.artikel_id",
+    hints:["Kette: KUNDE → BESTELLUNG → BESTELLPOSITION → ARTIKEL.", "Drei JOINs hintereinander, jeweils über den passenden Fremdschlüssel."]},
+  {id:'s7', diff:2, type:'select', prompt:'Zeige <b>kunde_id</b> und die <b>Anzahl</b> (als anzahl) der Bestellungen je Kunde — auch Kunden mit 0 Bestellungen sollen erscheinen.',
+    sol:"SELECT k.kunde_id, COUNT(b.bestellung_id) AS anzahl FROM KUNDE k LEFT JOIN BESTELLUNG b ON k.kunde_id = b.kunde_id GROUP BY k.kunde_id",
+    hints:["LEFT JOIN behält alle Kund*innen, auch ohne Treffer.", "GROUP BY k.kunde_id, dann COUNT(b.bestellung_id) — nicht COUNT(*), sonst zählt es leere Treffer mit!"]},
+  {id:'s8', diff:3, type:'select', prompt:'Zeige <b>name</b> und den <b>Gesamtbestellwert</b> (als summe = menge × preis) je Kunde, aber nur Kund*innen mit einer Summe über 100. Sortiere absteigend nach summe.',
+    sol:"SELECT k.name, SUM(bp.menge * a.preis) AS summe FROM KUNDE k JOIN BESTELLUNG b ON k.kunde_id = b.kunde_id JOIN BESTELLPOSITION bp ON b.bestellung_id = bp.bestellung_id JOIN ARTIKEL a ON bp.artikel_id = a.artikel_id GROUP BY k.name HAVING SUM(bp.menge * a.preis) > 100 ORDER BY summe DESC",
+    hints:["Erst alle vier Tabellen verknüpfen wie zuvor.", "GROUP BY k.name, SUM(...) in HAVING filtert nach der Gruppensumme (nicht WHERE!)."], orderMatters:true},
+  {id:'s9', diff:1, type:'select', prompt:'Aus welchen <b>Orten</b> (ort) kommen unsere Kund*innen — jeder Ort nur einmal?',
+    sol:"SELECT DISTINCT ort FROM KUNDE",
+    hints:["DISTINCT entfernt doppelte Zeilen aus dem Ergebnis."]},
+  {id:'s10', diff:3, type:'select', prompt:'Zeige <b>name</b> (KUNDE) und <b>bestellung_id</b> für <b>alle</b> Kund*innen — auch jene ohne Bestellung (dann NULL bei bestellung_id).',
+    sol:"SELECT k.name, b.bestellung_id FROM KUNDE k LEFT JOIN BESTELLUNG b ON k.kunde_id = b.kunde_id",
+    hints:["Ein normaler JOIN würde Kund*innen ohne Bestellung weglassen.", "LEFT JOIN KUNDE → BESTELLUNG behält alle Kund*innen."]},
+];
+
+const SQL_TASKS_W6 = [
+  {id:'w1', diff:1, type:'write', table:'ARTIKEL', prompt:'Füge einen neuen Artikel ein: artikel_id 7, bezeichnung \'Webcam\', preis 45.00, kategorie \'Zubehör\', lagerbestand 12.',
+    sol:"INSERT INTO ARTIKEL (artikel_id, bezeichnung, preis, kategorie, lagerbestand) VALUES (7, 'Webcam', 45.00, 'Zubehör', 12)",
+    hints:["INSERT INTO ARTIKEL (spalten...) VALUES (werte...)", "Reihenfolge der Werte muss zur Spaltenliste passen."]},
+  {id:'w2', diff:1, type:'write', table:'ARTIKEL', prompt:'Ändere den Preis von \'Maus\' auf 24.90.',
+    sol:"UPDATE ARTIKEL SET preis = 24.90 WHERE bezeichnung = 'Maus'",
+    hints:["UPDATE ARTIKEL SET preis = ... WHERE ...", "Ohne WHERE würden ALLE Artikel geändert!"]},
+  {id:'w3', diff:2, type:'write', table:'ARTIKEL', prompt:'Erhöhe den Lagerbestand aller Artikel der Kategorie \'Zubehör\' um 10 (lagerbestand = lagerbestand + 10).',
+    sol:"UPDATE ARTIKEL SET lagerbestand = lagerbestand + 10 WHERE kategorie = 'Zubehör'",
+    hints:["SET lagerbestand = lagerbestand + 10", "WHERE kategorie = 'Zubehör' trifft mehrere Zeilen gleichzeitig."]},
+  {id:'w4', diff:1, type:'write', table:'ARTIKEL', prompt:'Lösche alle Artikel, deren Lagerbestand 0 ist.',
+    sol:"DELETE FROM ARTIKEL WHERE lagerbestand = 0",
+    hints:["DELETE FROM ARTIKEL WHERE ...", "Ohne WHERE würde die GANZE Tabelle geleert!"]},
+  {id:'w5', diff:2, type:'write', table:'BESTELLUNG', prompt:'Setze bei Bestellung 2 den Status auf \'geliefert\'.',
+    sol:"UPDATE BESTELLUNG SET status = 'geliefert' WHERE bestellung_id = 2",
+    hints:["UPDATE BESTELLUNG SET status = 'geliefert' WHERE bestellung_id = 2"]},
+  {id:'w6', diff:2, type:'write', table:'BESTELLUNG', prompt:'Lösche alle Bestellungen mit Status \'storniert\'.',
+    sol:"DELETE FROM BESTELLUNG WHERE status = 'storniert'",
+    hints:["DELETE FROM BESTELLUNG WHERE status = 'storniert'"]},
+  {id:'w7', diff:1, type:'write', table:'KUNDE', prompt:'Füge eine neue Kundin ein: kunde_id 7, name \'Julia Wagner\', ort \'Graz\', plz \'8010\'.',
+    sol:"INSERT INTO KUNDE (kunde_id, name, ort, plz) VALUES (7, 'Julia Wagner', 'Graz', '8010')",
+    hints:["INSERT INTO KUNDE (kunde_id, name, ort, plz) VALUES (...)"]},
+];
+
+/* ---------- Quiz-Pools je Welt (Speed-Quiz) ---------- */
+const QUIZ = {
+  w1: [
+    {q:'Was ist eine Tabelle in einer relationalen Datenbank?', o:['Eine Sammlung von Zeilen mit gleicher Spaltenstruktur','Ein einzelner Wert','Ein Diagramm der Beziehungen','Eine Abfrage-Sprache'], c:0, e:'Eine Tabelle (Relation) besteht aus Zeilen (Datensätzen) mit denselben Spalten.'},
+    {q:'Was beschreibt eine Zeile (auch: Tupel, Datensatz)?', o:['Die Struktur der Tabelle','Einen konkreten Datensatz mit je einem Wert pro Spalte','Den Tabellennamen','Eine Abfrage'], c:1, e:'Jede Zeile ist ein konkreter Datensatz.'},
+    {q:'Wofür sorgt der Primärschlüssel (PK)?', o:['Er verknüpft zwei Tabellen','Er sortiert die Tabelle','Er identifiziert jede Zeile eindeutig','Er speichert Texte'], c:2, e:'Der Primärschlüssel ist die eindeutige, nicht-leere Kennung jeder Zeile.'},
+    {q:'Was macht ein Fremdschlüssel (FK)?', o:['Er verweist auf den Primärschlüssel einer anderen Tabelle','Er verschlüsselt Daten','Er ist immer NULL','Er ersetzt den Primärschlüssel'], c:0, e:'Fremdschlüssel stellen Beziehungen zwischen Tabellen her.'},
+    {q:'Was ist ein DBMS?', o:['Ein Diagrammtyp','Software zur Verwaltung von Datenbanken','Eine Abfragesprache','Ein Datentyp'], c:1, e:'DBMS = Datenbankmanagementsystem, z. B. MySQL, PostgreSQL.'},
+    {q:'Was bedeutet NULL in einer Spalte?', o:['Der Wert 0','Ein Leerstring', 'Kein Wert vorhanden / unbekannt','Ein Fehler'], c:2, e:'NULL heißt "kein Wert", nicht 0 oder leer.'},
+    {q:'Was ist ein Vorteil relationaler Datenbanken gegenüber einfachen Dateien?', o:['Sie brauchen keine Struktur','Strukturierte Abfragen, Konsistenz, weniger Redundanz','Sie sind immer schneller als jede Datei','Sie brauchen kein Schema'], c:1, e:'Relationale DBs bieten strukturierte Abfragen, Konsistenzregeln und Mehrbenutzerbetrieb.'},
+    {q:'Was ist das "Schema" einer Datenbank?', o:['Ein Backup','Die Struktur: Tabellen, Spalten, Typen, Beziehungen','Eine einzelne Abfrage','Der Name des Servers'], c:1, e:'Das Schema beschreibt den Aufbau der Datenbank.'},
+    {q:'Fachbegriff für "Tabelle"?', o:['Relation','Domäne','Kardinalität','Transaktion'], c:0, e:'"Relation" ist der Fachbegriff für Tabelle im relationalen Modell.'},
+    {q:'Was ist eine Domäne (Attributdomäne)?', o:['Die Adresse des Servers','Die Menge der erlaubten Werte eines Attributs','Ein Fremdschlüssel','Eine Tabelle ohne Primärschlüssel'], c:1, e:'Die Domäne legt fest, welche Werte ein Attribut annehmen darf.'},
+  ],
+  w2: [
+    {q:'Was ist eine Entität im ER-Modell?', o:['Eine Spalte','Ein eindeutig identifizierbares Objekt von Interesse, z. B. ein Kunde','Eine Abfrage','Ein Index'], c:1, e:'Entitäten sind die "Dinge", über die Daten gespeichert werden.'},
+    {q:'Was ist eine Beziehung (Relationship) im ER-Modell?', o:['Ein Attribut','Eine Verbindung zwischen zwei oder mehr Entitäten','Ein Primärschlüssel','Ein Datentyp'], c:1, e:'Beziehungen verbinden Entitäten miteinander.'},
+    {q:'"Ein Kunde hat mehrere Bestellungen, eine Bestellung gehört zu genau einem Kunden" — welche Kardinalität?', o:['1:1','1:n','n:m','0:0'], c:1, e:'Klassische 1:n-Beziehung.'},
+    {q:'Wie wird eine n:m-Beziehung in Tabellen umgesetzt?', o:['Gar nicht möglich','Durch eine zusätzliche Verknüpfungstabelle mit zwei Fremdschlüsseln','Durch einen zusätzlichen Primärschlüssel','Durch NULL-Werte'], c:1, e:'n:m braucht eine eigene Tabelle mit FKs zu beiden Seiten.'},
+    {q:'Was ist eine schwache Entität?', o:['Eine Entität ohne Attribute','Eine Entität, die nicht ohne eine andere (starke) Entität existieren kann','Eine Entität mit vielen Beziehungen','Eine gelöschte Entität'], c:1, e:'Schwache Entitäten hängen existenziell von einer starken Entität ab.'},
+    {q:'Was zeigt ein ER-Diagramm?', o:['Nur SQL-Befehle','Entitäten, Attribute, Beziehungen und Kardinalitäten','Nur den Serverstandort','Ausschließlich Primärschlüssel'], c:1, e:'Das ER-Diagramm ist die grafische Modellierung der Datenstruktur.'},
+    {q:'Wie wird eine 1:1-Beziehung meist umgesetzt?', o:['Verknüpfungstabelle','Fremdschlüssel (evtl. mit UNIQUE) in einer der beiden Tabellen','Gar nicht möglich','Zwei Primärschlüssel in einer Tabelle'], c:1, e:'Bei 1:1 reicht ein Fremdschlüssel, oft zusätzlich UNIQUE.'},
+    {q:'"Eine Bestellung enthält mehrere Artikel, ein Artikel taucht in mehreren Bestellungen auf" — Kardinalität?', o:['1:1','1:n','n:m','Keine Beziehung'], c:2, e:'Beide Seiten "viele" → n:m, braucht Verknüpfungstabelle (z. B. Bestellposition).'},
+    {q:'Was ist ein Attribut im ER-Modell?', o:['Eine Eigenschaft einer Entität, z. B. Name','Eine Beziehung','Eine Tabelle','Ein Fremdschlüssel'], c:0, e:'Attribute beschreiben die Eigenschaften einer Entität.'},
+  ],
+  w3: [
+    {q:'Was ist das Ziel der Normalisierung?', o:['Mehr Redundanz erzeugen','Redundanz vermeiden und Anomalien verhindern','Tabellen zusammenführen','Abfragen verlangsamen'], c:1, e:'Normalisierung reduziert Redundanz und vermeidet Anomalien.'},
+    {q:'Was fordert die 1. Normalform (1NF)?', o:['Atomare Werte, keine Wiederholungsgruppen','Keine transitive Abhängigkeit','Keine partielle Abhängigkeit','Genau eine Spalte pro Tabelle'], c:0, e:'1NF: jede Zelle enthält genau einen atomaren Wert.'},
+    {q:'Was fordert die 2. Normalform (2NF) zusätzlich zur 1NF?', o:['Keine partielle Abhängigkeit vom (zusammengesetzten) Schlüssel','Keine NULL-Werte','Nur Zahlen als Attribute','Genau zwei Tabellen'], c:0, e:'2NF verlangt volle funktionale Abhängigkeit vom gesamten Primärschlüssel.'},
+    {q:'Was fordert die 3. Normalform (3NF) zusätzlich?', o:['Keine transitive Abhängigkeit von Nicht-Schlüssel-Attributen','Keine Fremdschlüssel','Nur eine Zeile pro Tabelle','Keine Primärschlüssel'], c:0, e:'3NF: Nicht-Schlüssel-Attribute dürfen nicht von anderen Nicht-Schlüssel-Attributen abhängen.'},
+    {q:'Was ist eine Einfügeanomalie?', o:['Man kann Daten nicht speichern, ohne unnötige andere Daten mit einzufügen','Man kann nichts löschen','Die Tabelle hat zu viele Spalten','Ein Tippfehler beim INSERT'], c:0, e:'Z. B. kann ein neuer Artikel nicht erfasst werden, ohne eine (unbekannte) Bestellung anzugeben.'},
+    {q:'Was ist eine Änderungsanomalie (Update-Anomalie)?', o:['Ein Fakt ist mehrfach gespeichert und muss an mehreren Stellen geändert werden','Ein Update schlägt immer fehl','UPDATE ist in SQL nicht erlaubt','Der Primärschlüssel ändert sich automatisch'], c:0, e:'Redundante Daten müssen konsistent an mehreren Stellen aktualisiert werden.'},
+    {q:'Was ist eine Löschanomalie?', o:['Beim Löschen einer Zeile gehen ungewollt weitere Informationen verloren','DELETE funktioniert nie','Es kann nichts gelöscht werden','Löschen dauert zu lange'], c:0, e:'Z. B. verschwindet der einzige Hinweis auf einen Kunden, wenn seine letzte Bestellung gelöscht wird.'},
+    {q:'"A → B" (funktionale Abhängigkeit) bedeutet:', o:['A und B sind immer gleich','Der Wert von A bestimmt eindeutig den Wert von B','B bestimmt A','A und B sind unabhängig'], c:1, e:'Funktionale Abhängigkeit: zu jedem A-Wert gehört genau ein B-Wert.'},
+    {q:'Warum ist "Ort hängt von PLZ ab, PLZ ist Nicht-Schlüssel-Attribut in der Kundentabelle" ein 3NF-Problem?', o:['Weil das eine transitive Abhängigkeit ist','Weil PLZ ein Primärschlüssel sein muss','Weil das 1NF verletzt','Es ist kein Problem'], c:0, e:'Ort hängt nicht direkt vom PK ab, sondern über PLZ — transitiv, verletzt 3NF.'},
+  ],
+  w4: [
+    {q:'Wofür dient CREATE TABLE?', o:['Zum Löschen einer Tabelle','Zum Anlegen einer neuen Tabelle mit Spalten und Typen','Zum Einfügen von Daten','Zum Sortieren'], c:1, e:'CREATE TABLE definiert Name, Spalten, Datentypen und Constraints.'},
+    {q:'Welcher Datentyp passt am besten für einen Geldbetrag mit Nachkommastellen?', o:['INT','DECIMAL','BOOLEAN','DATE'], c:1, e:'DECIMAL speichert exakte Nachkommastellen — wichtig bei Geldbeträgen.'},
+    {q:'Wofür sorgt der PRIMARY KEY Constraint?', o:['Er erlaubt doppelte Werte','Er stellt Eindeutigkeit und NOT NULL für die Kennung sicher','Er verweist auf eine andere Tabelle','Er ist optional und meist leer'], c:1, e:'PRIMARY KEY = eindeutig + nicht leer.'},
+    {q:'Wofür sorgt FOREIGN KEY?', o:['Referenzielle Integrität — verweist auf einen PK einer anderen Tabelle','Verschlüsselung','Sortierung','Datentyp-Umwandlung'], c:0, e:'FOREIGN KEY stellt sicher, dass der Verweis auf eine existierende Zeile zeigt.'},
+    {q:'Wofür steht NOT NULL?', o:['Spalte darf leer bleiben','Spalte muss immer einen Wert enthalten','Spalte ist automatisch ein Schlüssel','Spalte akzeptiert nur Zahlen'], c:1, e:'NOT NULL verbietet leere Werte in dieser Spalte.'},
+    {q:'Wofür steht UNIQUE?', o:['Werte in dieser Spalte dürfen sich nicht wiederholen','Spalte ist der Primärschlüssel','Spalte darf NULL sein, aber nur einmal','Spalte wird automatisch sortiert'], c:0, e:'UNIQUE erzwingt, dass kein Wert doppelt vorkommt.'},
+    {q:'Merkmal von Single Table Inheritance (eine Tabelle für alle Subklassen)?', o:['Viele NULL-Felder, oft eine Diskriminator-Spalte für den Typ','Keine gemeinsame Tabelle','Jede Subklasse hat eine eigene komplette Tabelle','Keine Vererbung möglich'], c:0, e:'Alle Subklassen landen in einer breiten Tabelle mit vielen ungenutzten (NULL) Spalten.'},
+    {q:'Merkmal von Table per Class (Concrete Table Inheritance)?', o:['Jede Subklasse bekommt eine eigene, vollständige Tabelle — gemeinsame Spalten werden dupliziert','Alles in einer Tabelle','Nur die Basisklasse hat eine Tabelle','Keine Duplizierung von Spalten'], c:0, e:'Jede konkrete Klasse hat ihre eigene komplette Tabelle, gemeinsame Spalten wiederholen sich.'},
+    {q:'Merkmal von Joined Table Inheritance (Class Table Inheritance)?', o:['Basis- und Subklassen-Tabellen sind über den Primärschlüssel per JOIN verbunden','Es gibt nur eine einzige Tabelle','Keine Fremdschlüssel nötig','Subklassen brauchen keinen eigenen Schlüssel'], c:0, e:'Gemeinsame Attribute in der Basistabelle, spezifische in Subtabellen — verbunden per PK/FK-JOIN.'},
+  ],
+  w5: [
+    {q:'Was liefert ein INNER JOIN?', o:['Nur Zeilen, die in beiden Tabellen einen Treffer haben','Alle Zeilen aus beiden Tabellen','Nur Zeilen der linken Tabelle','Nur die erste Zeile'], c:0, e:'INNER JOIN liefert nur "matching" Zeilen aus beiden Tabellen.'},
+    {q:'Was liefert ein LEFT JOIN zusätzlich zum INNER JOIN?', o:['Alle Zeilen der linken Tabelle, auch ohne Treffer rechts (dann NULL)','Alle Zeilen der rechten Tabelle ohne Treffer','Gar nichts zusätzlich','Nur doppelte Zeilen'], c:0, e:'LEFT JOIN behält jede Zeile der linken Tabelle, fehlende rechte Werte werden NULL.'},
+    {q:'Wofür steht die ON-Klausel bei einem JOIN?', o:['Sie sortiert das Ergebnis','Sie definiert die Verknüpfungsbedingung zwischen den Tabellen','Sie begrenzt die Zeilenanzahl','Sie benennt die Ausgabespalten'], c:1, e:'ON legt fest, welche Spalten gleich sein müssen, damit Zeilen verknüpft werden.'},
+    {q:'Was macht UNION?', o:['Vereinigt die Ergebnisse zweier Abfragen und entfernt Duplikate','Verknüpft zwei Tabellen wie ein JOIN','Löscht Zeilen','Zählt Zeilen'], c:0, e:'UNION braucht gleiche Spaltenanzahl/-typen und liefert eindeutige Zeilen.'},
+    {q:'Unterschied UNION vs. UNION ALL?', o:['UNION ALL behält Duplikate, UNION entfernt sie','Kein Unterschied','UNION ALL ist langsamer und macht dasselbe','UNION ALL funktioniert nur mit Zahlen'], c:0, e:'UNION ALL behält alle Zeilen inkl. Duplikate, UNION dedupliziert.'},
+    {q:'Was ist eine VIEW?', o:['Eine physisch gespeicherte Kopie der Daten','Eine gespeicherte, benannte Abfrage, die wie eine Tabelle gelesen werden kann','Ein Backup der Datenbank','Ein Index'], c:1, e:'Eine View speichert keine eigenen Daten, sondern eine Abfrage-Definition.'},
+    {q:'Wann ist eine View typischerweise NICHT schreibbar?', o:['Bei JOIN, GROUP BY, Aggregatfunktionen oder DISTINCT','Immer','Nie','Nur bei SELECT *'], c:0, e:'Sobald die View mehrere Tabellen oder Aggregationen kombiniert, ist meist kein eindeutiges UPDATE mehr möglich.'},
+    {q:'Was bewirkt GROUP BY?', o:['Sortiert die Ausgabe','Fasst Zeilen mit gleichem Wert in den angegebenen Spalten zu Gruppen zusammen','Löscht doppelte Spalten','Erstellt eine neue Tabelle'], c:1, e:'GROUP BY wird meist zusammen mit Aggregatfunktionen wie COUNT, SUM verwendet.'},
+    {q:'Unterschied WHERE vs. HAVING?', o:['WHERE filtert einzelne Zeilen vor der Gruppierung, HAVING filtert Gruppen nach der Gruppierung','Kein Unterschied','HAVING kommt vor WHERE','WHERE funktioniert nur mit Aggregatfunktionen'], c:0, e:'HAVING kann sich auf Aggregatwerte (z. B. SUM) beziehen, WHERE nicht.'},
+  ],
+  w6: [
+    {q:'Wofür dient INSERT INTO?', o:['Zum Löschen von Zeilen','Zum Einfügen neuer Zeilen in eine Tabelle','Zum Ändern der Tabellenstruktur','Zum Sortieren'], c:1, e:'INSERT INTO fügt neue Datensätze ein.'},
+    {q:'Was passiert bei UPDATE ohne WHERE?', o:['Nichts passiert','Alle Zeilen der Tabelle werden geändert','Es gibt einen Syntaxfehler','Nur die erste Zeile wird geändert'], c:1, e:'Ohne WHERE betrifft UPDATE die komplette Tabelle — Vorsicht!'},
+    {q:'Was passiert bei DELETE FROM tabelle ohne WHERE?', o:['Die Tabelle wird komplett gelöscht (DROP)','Alle Zeilen werden gelöscht, die Tabelle bleibt aber bestehen','Nichts, DELETE braucht immer WHERE','Nur doppelte Zeilen werden gelöscht'], c:1, e:'DELETE ohne WHERE leert die Tabelle, im Gegensatz zu DROP TABLE bleibt die Struktur erhalten.'},
+    {q:'Was ist eine Transaktion?', o:['Ein einzelnes SELECT','Eine Folge von Operationen, die als Ganzes erfolgreich oder gar nicht ausgeführt wird','Ein Backup','Ein Index'], c:1, e:'Transaktionen garantieren: alles oder nichts.'},
+    {q:'Wofür steht das A in ACID?', o:['Access','Atomicity (Atomarität) — alles oder nichts','Availability','Aggregation'], c:1, e:'Atomicity: eine Transaktion wird ganz oder gar nicht ausgeführt.'},
+    {q:'Wofür steht das C in ACID?', o:['Consistency (Konsistenz) — DB bleibt in gültigem Zustand','Cache','Concurrency','Compression'], c:0, e:'Consistency: die Datenbank bleibt vor und nach der Transaktion konsistent.'},
+    {q:'Wofür steht das I in ACID?', o:['Integration','Isolation — parallele Transaktionen beeinflussen sich nicht unkontrolliert','Index','Insertion'], c:1, e:'Isolation trennt gleichzeitig laufende Transaktionen voneinander ab.'},
+    {q:'Wofür steht das D in ACID?', o:['Deletion','Durability (Dauerhaftigkeit) — Änderungen bleiben nach COMMIT erhalten','Data','Distribution'], c:1, e:'Durability: nach einem COMMIT übersteht die Änderung sogar einen Absturz.'},
+    {q:'Was macht ROLLBACK?', o:['Speichert die Transaktion dauerhaft','Macht alle Änderungen der aktuellen Transaktion rückgängig','Löscht die Tabelle','Erstellt eine neue Transaktion'], c:1, e:'ROLLBACK setzt die Transaktion auf den Stand vor dem START TRANSACTION zurück.'},
+  ],
+  w7: [
+    {q:'Wofür steht NoSQL?', o:['No Structured Query Language','Not only SQL — Datenbanken jenseits des klassischen relationalen Modells','Kein SQL erlaubt','Neue SQL-Version'], c:1, e:'"Not only SQL" — ergänzt relationale Datenbanken für bestimmte Anwendungsfälle.'},
+    {q:'Wann greift man eher zu NoSQL statt relational?', o:['Bei kleinen, stabilen Datenmengen mit strikten Beziehungen','Bei sehr großen, schnell wachsenden Datenmengen mit horizontaler Skalierung','Nie, NoSQL ist immer schlechter','Nur für Textdateien'], c:1, e:'NoSQL punktet bei Massendaten, hoher Schreiblast und horizontaler Skalierung.'},
+    {q:'Merkmal eines Key-Value-Stores?', o:['Daten als einfache Schlüssel-Wert-Paare, sehr schneller Zugriff über den Key','Knoten und Kanten','Tabellen mit festen Spalten','Nur für Bilder geeignet'], c:0, e:'Sehr simples, aber extrem schnelles Modell — ideal für Sessions, Caches.'},
+    {q:'Merkmal eines Wide-Column-Stores?', o:['Spaltenorientiert, flexible Spalten pro Zeile, gut für riesige strukturierte Datenmengen','Nur Schlüssel-Wert-Paare','Ausschließlich Graphen','Ausschließlich Dokumente'], c:0, e:'Z. B. Cassandra — jede Zeile kann unterschiedliche Spalten haben.'},
+    {q:'Merkmal eines Document-Stores?', o:['Speichert Dokumente (z. B. JSON), Struktur kann je Dokument variieren','Speichert nur Zahlen','Erzwingt striktes, festes Schema','Kennt keine Verschachtelung'], c:0, e:'Z. B. MongoDB — jedes Dokument kann eigene Felder haben.'},
+    {q:'Merkmal einer Graphdatenbank?', o:['Speichert Knoten und Kanten — ideal für stark vernetzte Daten und Beziehungsabfragen','Speichert nur flache Tabellen','Kennt keine Beziehungen','Ist immer am schnellsten für einfache Lookups'], c:0, e:'Z. B. Neo4j — optimiert für Fragen wie "Freunde von Freunden".'},
+    {q:'Scale-up vs. Scale-out?', o:['Scale-up = stärkere Hardware für einen Server; Scale-out = mehr Server parallel','Beides bedeutet dasselbe','Scale-out = ein größerer Server','Scale-up = mehr Server'], c:0, e:'Scale-out (horizontale Skalierung) ist die Stärke vieler NoSQL-Systeme.'},
+    {q:'Was besagt BASE (Gegenmodell zu ACID)?', o:['Basically Available, Soft state, Eventually consistent','Backup Always Saves Everything','Binary Atomic Secure Encryption','Balanced Automatic Storage Engine'], c:0, e:'BASE toleriert vorübergehende Inkonsistenz zugunsten von Verfügbarkeit und Skalierung.'},
+    {q:'Was besagt das CAP-Theorem?', o:['Man kann von Consistency, Availability, Partition Tolerance höchstens 2 gleichzeitig voll garantieren','Alle drei sind immer gleichzeitig möglich','CAP betrifft nur relationale Datenbanken','CAP hat mit Verteilung nichts zu tun'], c:0, e:'Bei einer Netzwerkpartition muss man zwischen Konsistenz und Verfügbarkeit wählen.'},
+  ],
+};
+
+/* ---------- Boss-Fragen je Welt (schwerer, gemischt) ---------- */
+const BOSS = {
+  w1: [
+    {q:'Tabelle SCHÜLER(schueler_id, name, klasse). Welche Spalte ist der beste Kandidat für den Primärschlüssel?', o:['name','klasse','schueler_id','Keine, alle drei zusammen'], c:2, e:'schueler_id ist eindeutig und ändert sich nicht — idealer PK. Namen können doppelt vorkommen.'},
+    {q:'Warum ist "name" allein meist ein schlechter Primärschlüssel?', o:['Namen sind zu kurz','Namen können bei mehreren Personen gleich sein','Namen sind immer NULL','SQL erlaubt keine Text-Primärschlüssel'], c:1, e:'Zwei Personen können denselben Namen haben — der PK muss aber eindeutig sein.'},
+    {q:'Eine Spalte "email" soll pro Kunde eindeutig, aber nicht der Primärschlüssel sein. Welcher Constraint passt?', o:['NOT NULL','UNIQUE','PRIMARY KEY','FOREIGN KEY'], c:1, e:'UNIQUE erzwingt Eindeutigkeit, ohne die Spalte zum PK zu machen.'},
+    {q:'Was passiert, wenn eine Fremdschlüssel-Spalte auf eine nicht existierende Zeile zeigen würde?', o:['Das ist erlaubt und normal','Referenzielle Integrität wird verletzt — DBMS verhindert das i. d. R.','Die Datenbank löscht automatisch die Zeile','Nichts, Fremdschlüssel sind nur Kommentare'], c:1, e:'FOREIGN KEY Constraints schützen genau davor.'},
+    {q:'Zwei Tabellen ohne jede Verbindung (kein FK) — was fehlt aus Modellierungssicht meist?', o:['Nichts, das ist normal','Vermutlich eine fehlende Beziehung/Fremdschlüssel, falls sie fachlich zusammengehören','Ein Index','Ein zweiter Primärschlüssel'], c:1, e:'Fachlich zusammengehörige Tabellen sollten i. d. R. über FKs verbunden sein.'},
+    {q:'Was ist der Unterschied zwischen Attribut und Domäne?', o:['Attribut = Spalte, Domäne = erlaubter Wertebereich dieser Spalte','Kein Unterschied','Domäne = Tabelle, Attribut = Datenbank','Attribut ist immer eine Zahl'], c:0, e:'Die Domäne schränkt ein, welche Werte ein Attribut annehmen darf.'},
+  ],
+  w2: [
+    {q:'"Ein Land hat eine Hauptstadt, eine Stadt ist Hauptstadt von genau einem Land" — Kardinalität + Umsetzung?', o:['n:m, Verknüpfungstabelle','1:1, Fremdschlüssel (evtl. UNIQUE)','1:n, kein Fremdschlüssel nötig','Keine Beziehung nötig'], c:1, e:'1:1-Beziehung — ein Fremdschlüssel reicht, UNIQUE sichert die Eindeutigkeit ab.'},
+    {q:'Ein Mitarbeiter kann in mehreren Projekten mitarbeiten, ein Projekt hat mehrere Mitarbeiter. Wie viele zusätzliche Tabellen braucht die Umsetzung mindestens?', o:['Keine','Eine Verknüpfungstabelle mit zwei Fremdschlüsseln','Zwei zusätzliche Tabellen','Drei zusätzliche Tabellen'], c:1, e:'n:m braucht genau eine Verknüpfungstabelle (z. B. MITARBEIT(mitarbeiter_id, projekt_id)).'},
+    {q:'RECHNUNGSPOSITION hängt von RECHNUNG ab und hat ohne sie keinen Sinn — was ist RECHNUNGSPOSITION?', o:['Eine starke Entität','Eine schwache Entität','Ein Attribut','Eine Domäne'], c:1, e:'Schwache Entitäten existieren nur im Kontext einer starken Entität.'},
+    {q:'Warum braucht eine n:m-Verknüpfungstabelle meist einen zusammengesetzten Primärschlüssel?', o:['Weil das Zufall ist','Weil die Kombination beider Fremdschlüssel die Zeile eindeutig macht','Weil SQL das verlangt, egal was','Verknüpfungstabellen brauchen nie einen PK'], c:1, e:'z. B. (bestellung_id, artikel_id) zusammen sind eindeutig, jede Spalte allein nicht unbedingt.'},
+    {q:'Kardinalität "0..1 zu 0..n" bei KUNDE–BESTELLUNG bedeutet:', o:['Jeder Kunde hat genau eine Bestellung','Ein Kunde kann keine, eine oder mehrere Bestellungen haben; jede Bestellung gehört zu genau einem Kunden','Jede Bestellung gehört zu mehreren Kunden','Kunden und Bestellungen sind nicht verbunden'], c:1, e:'0..1 auf Kundenseite würde heißen: die Bestellung hat 0 oder 1 Kunden. Hier: 0..n Bestellungen je Kunde.'},
+    {q:'Ein ER-Modell wird in Tabellen überführt. Was wird aus einer 1:n-Beziehung typischerweise?', o:['Eine eigene Verknüpfungstabelle','Ein Fremdschlüssel auf der "n"-Seite, der auf den PK der "1"-Seite zeigt','Zwei neue Primärschlüssel','Gar nichts, 1:n wird ignoriert'], c:1, e:'Die "n"-Seite bekommt den Fremdschlüssel (z. B. BESTELLUNG.kunde_id).'},
+  ],
+  w3: [
+    {q:'Tabelle BESTELLUNG(bestellung_id, kunde_id, kundenname, kundenort) — welches Problem liegt vor?', o:['1NF verletzt','Redundanz/3NF-Problem: kundenname und kundenort hängen nicht vom Schlüssel bestellung_id ab, sondern von kunde_id','Kein Problem','2NF verletzt, weil PK zusammengesetzt ist'], c:1, e:'kundenname/-ort sind transitiv über kunde_id abhängig — gehören in eine eigene KUNDE-Tabelle.'},
+    {q:'Tabelle BESTELLPOSITION(bestellung_id, artikel_id, menge, artikelname) mit PK (bestellung_id, artikel_id) — welches Problem?', o:['3NF-Verletzung durch transitive Abhängigkeit über einen Nicht-Schlüssel','2NF-Verletzung: artikelname hängt nur von artikel_id ab, nicht vom vollen Schlüssel','1NF-Verletzung','Kein Problem'], c:1, e:'Partielle Abhängigkeit vom zusammengesetzten Schlüssel — klassische 2NF-Verletzung.'},
+    {q:'Eine Spalte "telefonnummern" enthält "0664-123, 0680-456" in einer Zelle. Welche Normalform ist verletzt?', o:['1NF — Werte sind nicht atomar','2NF','3NF','Keine'], c:0, e:'Mehrere Werte in einer Zelle verletzen die 1NF (Atomaritätsforderung).'},
+    {q:'Eine Tabelle ist in 3NF. Was folgt daraus über 1NF und 2NF?', o:['Nichts, das sind unabhängige Regeln','3NF setzt 1NF und 2NF bereits voraus — sie sind automatisch erfüllt','Sie verletzt automatisch 1NF','3NF ist schwächer als 1NF'], c:1, e:'Die Normalformen bauen aufeinander auf: 3NF ⟹ 2NF ⟹ 1NF.'},
+    {q:'Warum lohnt sich Normalisierung manchmal NICHT vollständig (z. B. aus Performance-Gründen)?', o:['Sie ist immer schlecht','Stark normalisierte Schemata brauchen mehr JOINs, was Abfragen verlangsamen kann — daher wird manchmal bewusst denormalisiert','Normalisierung ist in SQL verboten','Es gibt keinen Grund, sie zu vermeiden'], c:1, e:'Denormalisierung ist ein bewusster Kompromiss zwischen Redundanzfreiheit und Lesegeschwindigkeit.'},
+    {q:'Welche Anomalie liegt vor: "Lösche ich Bestellung 3, verschwindet die einzige Information, dass Kunde Max Novak existiert"?', o:['Einfügeanomalie','Änderungsanomalie','Löschanomalie','Keine, das ist normal'], c:2, e:'Mit der Bestellung geht ungewollt auch die Kundeninformation verloren.'},
+  ],
+  w4: [
+    {q:'Onlineshop: ARTIKEL und FILM (Subklasse mit Zusatzfeldern wie fsk, laufzeit) sollen per Joined Table Inheritance modelliert werden. Wie sind die Tabellen verbunden?', o:['Gar nicht, zwei getrennte Welten','FILM hat denselben Primärschlüssel wie den zugehörigen ARTIKEL, zugleich Fremdschlüssel auf ARTIKEL','FILM enthält alle Artikel-Spalten dupliziert','ARTIKEL enthält alle Film-Spalten'], c:1, e:'Klassisches Joined-Table-Pattern: FILM.artikel_id ist PK und gleichzeitig FK auf ARTIKEL.'},
+    {q:'Welche Vererbungsstrategie erzeugt die meisten NULL-Werte?', o:['Table per Class','Single Table Inheritance','Joined Table Inheritance','Keine erzeugt NULL-Werte'], c:1, e:'Bei einer gemeinsamen Tabelle für alle Subklassen bleiben nicht-passende Spalten NULL.'},
+    {q:'Welche Vererbungsstrategie braucht bei einer Abfrage über die Basisklasse KEINEN JOIN?', o:['Joined Table Inheritance','Single Table Inheritance','Beide brauchen immer einen JOIN','Table per Class braucht nie einen JOIN'], c:1, e:'Bei Single Table Inheritance liegt alles in einer Tabelle — kein JOIN nötig, dafür viele NULLs.'},
+    {q:'Ein Constraint verlangt: "Jede Bestellung muss zu einem existierenden Kunden gehören." Welcher Constraint-Typ?', o:['UNIQUE','NOT NULL','FOREIGN KEY','CHECK'], c:2, e:'FOREIGN KEY erzwingt referenzielle Integrität zwischen Tabellen.'},
+    {q:'Für ein Attribut "geburtsdatum" — welcher Datentyp ist am passendsten?', o:['VARCHAR','DATE','BOOLEAN','INT'], c:1, e:'DATE speichert Kalenderdaten korrekt und erlaubt Datumsvergleiche/-rechnung.'},
+    {q:'Nachteil von Table per Class (Concrete Table Inheritance)?', o:['Zu wenige Tabellen','Gemeinsame Spalten (z. B. Name, Preis) werden in jeder Subklassen-Tabelle dupliziert','Zu viele NULL-Werte','Kein Nachteil vorhanden'], c:1, e:'Gemeinsame Struktur wiederholt sich in jeder Tabelle — Änderungen müssen überall gepflegt werden.'},
+  ],
+  w5: [
+    {q:'NATURAL JOIN zwischen zwei Tabellen, die zufällig beide eine Spalte "ort" haben (fachlich unterschiedliche Bedeutung) — was droht?', o:['Ein Syntaxfehler','Ein ungewollter zusätzlicher/falscher Verknüpfungsversuch über "ort" — meist weniger/falsche Zeilen im Ergebnis','Das Ergebnis ist garantiert korrekt','NATURAL JOIN ignoriert gleichnamige Spalten automatisch'], c:1, e:'NATURAL JOIN verknüpft automatisch über ALLE gleichnamigen Spalten — eine Falle bei zufällig gleichen Namen.'},
+    {q:'UNION zweier SELECTs schlägt fehl — wahrscheinlichster Grund?', o:['Zu viele Zeilen','Unterschiedliche Anzahl oder unpassende Typen der Spalten in beiden SELECTs','UNION braucht immer ORDER BY','Beide SELECTs nutzen dieselbe Tabelle'], c:1, e:'UNION verlangt spaltenweise passende Struktur (Anzahl & kompatible Typen).'},
+    {q:'SELECT kategorie, COUNT(*) FROM ARTIKEL GROUP BY kategorie HAVING COUNT(*) > 2 — was liefert das?', o:['Alle Artikel einzeln','Nur Kategorien mit mehr als 2 Artikeln, mit ihrer Anzahl','Nur Kategorien mit genau 2 Artikeln','Einen Fehler, weil HAVING verboten ist'], c:1, e:'HAVING filtert nach der Gruppierung anhand des Aggregatwerts COUNT(*).'},
+    {q:'Eine View wurde mit JOIN und Aggregatfunktion definiert. Ein UPDATE auf die View wird versucht — was passiert typischerweise?', o:['Funktioniert problemlos wie bei einer normalen Tabelle','Meist ein Fehler oder Einschränkung, da nicht eindeutig auf Basistabellen abbildbar','Löscht automatisch alle Basistabellen','Erstellt automatisch eine neue Tabelle'], c:1, e:'Views mit JOIN/GROUP BY/Aggregaten sind i. d. R. nicht (vollständig) schreibbar.'},
+    {q:'LEFT JOIN KUNDE → BESTELLUNG: Ein Kunde ohne Bestellung — was steht in den BESTELLUNG-Spalten dieser Zeile?', o:['0','Leerstring','NULL','Die Zeile fehlt komplett'], c:2, e:'Fehlende Treffer werden bei LEFT JOIN mit NULL aufgefüllt, die Kundenzeile bleibt aber erhalten.'},
+    {q:'INTERSECT zweier Abfragen liefert:', o:['Alle Zeilen aus beiden zusammen','Nur Zeilen, die in BEIDEN Ergebnissen vorkommen','Nur Zeilen, die NUR in der ersten Abfrage vorkommen','Immer eine leere Menge'], c:1, e:'INTERSECT = Schnittmenge der beiden Ergebnismengen.'},
+  ],
+  w6: [
+    {q:'Zwei Transaktionen lesen denselben Kontostand, beide berechnen unabhängig einen neuen Wert und schreiben ihn — eine Änderung geht verloren. Welches Phänomen?', o:['Dirty Read','Lost Update','Phantom Read','Non-repeatable Read'], c:1, e:'Lost Update: eine der beiden Schreiboperationen überschreibt die andere ungewollt.'},
+    {q:'Transaktion A liest einen noch nicht committeten Wert von Transaktion B, die danach ein ROLLBACK macht. Welches Phänomen?', o:['Dirty Read','Lost Update','Phantom Read','Serialisierungsfehler'], c:0, e:'Dirty Read: gelesen wird ein Wert, der nie "offiziell" existiert hat.'},
+    {q:'Transaktion A liest eine Zeile zweimal und bekommt beide Male unterschiedliche Werte, weil B zwischendurch committet hat. Welches Phänomen?', o:['Dirty Read','Non-repeatable Read','Phantom Read','Lost Update'], c:1, e:'Non-repeatable Read: derselbe Datensatz ändert sich zwischen zwei Lesevorgängen innerhalb einer Transaktion.'},
+    {q:'Transaktion A zählt Zeilen mit einer Bedingung zweimal und bekommt beim zweiten Mal mehr Zeilen, weil B neue eingefügt hat. Welches Phänomen?', o:['Phantom Read','Dirty Read','Lost Update','Kein Phänomen, das ist normal'], c:0, e:'Phantom Read: neue passende Zeilen "erscheinen" zwischen zwei Abfragen.'},
+    {q:'Welches Isolationslevel verhindert ALLE vier klassischen Phänomene (inkl. Phantom Read)?', o:['Read Uncommitted','Read Committed','Repeatable Read','Serializable'], c:3, e:'Serializable ist das strengste Isolationslevel.'},
+    {q:'Warum kostet ein hohes Isolationslevel (z. B. Serializable) oft Performance?', o:['Es kostet nichts','Mehr Sperren/Kontrollen nötig, um Nebenläufigkeits-Phänomene zu verhindern → weniger Parallelität möglich','Es nutzt weniger Speicher','Es braucht keine Transaktionen mehr'], c:1, e:'Strengere Isolation bedeutet mehr Koordinationsaufwand zwischen parallelen Transaktionen.'},
+  ],
+  w7: [
+    {q:'Ein Onlineshop will Produktbewertungen mit stark wechselnden Feldern je Produktkategorie speichern (mal Größe, mal Laufzeit, mal ...). Welcher NoSQL-Typ passt am besten?', o:['Key-Value-Store','Document-Store','Graphdatenbank','Wide-Column-Store'], c:1, e:'Dokumente mit flexibler, variabler Struktur sind die Stärke von Document-Stores.'},
+    {q:'Ein soziales Netzwerk will "Freunde 3. Grades" in Millisekunden finden. Welcher NoSQL-Typ passt am besten?', o:['Key-Value-Store','Wide-Column-Store','Graphdatenbank','Document-Store'], c:2, e:'Graphdatenbanken sind für tief vernetzte Beziehungsabfragen optimiert.'},
+    {q:'Ein IoT-System speichert Milliarden Sensormesswerte, meist spaltenweise über Zeit ausgewertet. Welcher NoSQL-Typ passt am besten?', o:['Wide-Column-Store','Graphdatenbank','Key-Value-Store','Relationale DB ist hier immer besser'], c:0, e:'Wide-Column-Stores wie Cassandra sind für riesige, spaltenorientierte Zeitreihen gebaut.'},
+    {q:'Warum kann "Eventual Consistency" bei einem verteilten System sinnvoll sein?', o:['Weil Inkonsistenz immer gut ist','Weil sie Verfügbarkeit/Performance zugunsten sofortiger globaler Konsistenz priorisiert — für viele Anwendungsfälle ausreichend','Weil ACID dadurch garantiert wird','Weil dadurch keine Replikation nötig ist'], c:1, e:'Eventual Consistency toleriert kurzzeitige Abweichungen zwischen Knoten, um Verfügbarkeit/Geschwindigkeit zu gewinnen.'},
+    {q:'Nach dem CAP-Theorem: Bei einer Netzwerkpartition muss ein System wählen zwischen…', o:['Consistency und Availability','Nur Performance','Backup und Restore','SQL und NoSQL'], c:0, e:'Partition Tolerance ist bei verteilten Systemen meist gesetzt — die Wahl fällt zwischen C und A.'},
+    {q:'Warum ist horizontale Skalierung (Scale-out) bei vielen NoSQL-Systemen leichter als bei klassischen relationalen DBs?', o:['NoSQL-Daten sind grundsätzlich kleiner','Viele NoSQL-Modelle verzichten bewusst auf komplexe JOINs/Transaktionen über mehrere Server hinweg, was Verteilung vereinfacht','Relationale DBs können grundsätzlich nicht auf mehreren Servern laufen','Es gibt keinen echten Unterschied'], c:1, e:'Der Verzicht auf serverübergreifende JOINs/starke Konsistenz erleichtert die Verteilung auf viele Server.'},
+  ],
+};
+
+/* ---------- Match-Pools je Welt (Begriffe/Szenario ↔ Zuordnung) ---------- */
+const MATCH = {
+  w1: [
+    {a:'Primärschlüssel', b:'Eindeutige, nicht leere Kennung jeder Zeile'},
+    {a:'Fremdschlüssel', b:'Verweist auf den Primärschlüssel einer anderen Tabelle'},
+    {a:'Tupel / Zeile', b:'Ein einzelner Datensatz in einer Tabelle'},
+    {a:'Attribut / Spalte', b:'Eine Eigenschaft, die jede Zeile besitzt'},
+    {a:'Relation', b:'Fachbegriff für eine Tabelle'},
+    {a:'Domäne', b:'Menge der erlaubten Werte eines Attributs'},
+    {a:'Kardinalität', b:'Gibt an, wie viele Zeilen zweier Tabellen miteinander verknüpft sein können'},
+    {a:'DBMS', b:'Software, die die Datenbank verwaltet und Abfragen ausführt'},
+  ],
+  w2: [
+    {a:'Eine Person hat einen Reisepass, ein Reisepass gehört einer Person', b:'1 : 1'},
+    {a:'Ein Kunde tätigt mehrere Bestellungen', b:'1 : n'},
+    {a:'Ein Film hat mehrere Schauspieler, ein Schauspieler spielt in mehreren Filmen', b:'n : m'},
+    {a:'Ein Land hat eine Hauptstadt', b:'1 : 1'},
+    {a:'Eine Bestellung enthält mehrere Artikel, ein Artikel steht in mehreren Bestellungen', b:'n : m'},
+    {a:'Ein Mitarbeiter gehört zu einer Abteilung, eine Abteilung hat mehrere Mitarbeiter', b:'1 : n'},
+    {a:'Ein Schüler besucht mehrere Kurse, ein Kurs hat mehrere Schüler', b:'n : m'},
+    {a:'Ein Auto hat genau ein Kennzeichen', b:'1 : 1'},
+  ],
+  w3: [
+    {a:'Ein Attribut enthält mehrere Telefonnummern kommagetrennt', b:'1NF verletzt (keine atomaren Werte)'},
+    {a:'Artikelname hängt nur von einem Teil des zusammengesetzten Schlüssels ab', b:'2NF verletzt (partielle Abhängigkeit)'},
+    {a:'Ort hängt von PLZ ab, PLZ ist Nicht-Schlüssel-Attribut', b:'3NF verletzt (transitive Abhängigkeit)'},
+    {a:'Löscht man die letzte Bestellung, verschwindet auch der Kundenname', b:'Löschanomalie'},
+    {a:'Der Kundenname muss bei jeder Bestellung neu eingegeben werden', b:'Redundanz'},
+    {a:'Ohne eine Bestellung kann kein neuer Artikel erfasst werden', b:'Einfügeanomalie'},
+    {a:'Die Adresse ändert sich und muss in 50 Zeilen aktualisiert werden', b:'Änderungsanomalie'},
+    {a:'Atomare Werte, voll funktional & nicht transitiv abhängig', b:'3NF erfüllt'},
+  ],
+  w4: [
+    {a:'INT', b:'Ganze Zahl, z. B. eine ID'},
+    {a:'VARCHAR(n)', b:'Zeichenkette variabler Länge bis n Zeichen'},
+    {a:'DECIMAL', b:'Exakte Zahl mit Nachkommastellen, z. B. ein Preis'},
+    {a:'DATE', b:'Datumswert (Jahr-Monat-Tag)'},
+    {a:'BOOLEAN', b:'Wahrheitswert true/false'},
+    {a:'PRIMARY KEY', b:'Eindeutige, nicht leere Kennung einer Zeile'},
+    {a:'FOREIGN KEY', b:'Verweis auf den Primärschlüssel einer anderen Tabelle'},
+    {a:'NOT NULL', b:'Spalte darf keinen leeren Wert enthalten'},
+  ],
+  w7: [
+    {a:'Session-Daten eines Webshops, blitzschneller Zugriff per ID', b:'Key-Value-Store'},
+    {a:"Soziales Netzwerk: 'Freunde von Freunden' finden", b:'Graphdatenbank'},
+    {a:'Produktkatalog mit stark unterschiedlichen Attributen je Artikel', b:'Document-Store'},
+    {a:'Sensordaten von Millionen Geräten, spaltenweise über die Zeit ausgewertet', b:'Wide-Column-Store'},
+    {a:'Warenkorb, der nur per eindeutiger ID gelesen wird', b:'Key-Value-Store'},
+    {a:'Empfehlungen basierend auf Beziehungen zwischen Nutzern und Produkten', b:'Graphdatenbank'},
+    {a:'Blog-Artikel mit optionalen, wechselnden Feldern', b:'Document-Store'},
+    {a:'Zeitreihendaten von IoT-Sensoren in riesigem Umfang', b:'Wide-Column-Store'},
+  ],
+};
+
+const WORLDS = [
+  {id:'w1', n:1, title:'Datenbank-Basics', sub:'Tabellen, Schlüssel, Begriffe', icon:'🗂️', color:'s', skillType:'match'},
+  {id:'w2', n:2, title:'ER-Modell', sub:'Entitäten, Beziehungen, Kardinalitäten', icon:'🕸️', color:'k', skillType:'match'},
+  {id:'w3', n:3, title:'Normalisierung', sub:'1NF · 2NF · 3NF, Anomalien', icon:'🧹', color:'a', skillType:'match'},
+  {id:'w4', n:4, title:'Tabellen & Vererbung', sub:'CREATE TABLE, Constraints, Strategien', icon:'🏗️', color:'b', skillType:'match'},
+  {id:'w5', n:5, title:'SQL-Abfragen', sub:'SELECT, JOIN, GROUP BY, Views', icon:'🔎', color:'s', skillType:'sql'},
+  {id:'w6', n:6, title:'Transaktionen', sub:'INSERT/UPDATE/DELETE, ACID', icon:'⚡', color:'warn', skillType:'sql'},
+  {id:'w7', n:7, title:'NoSQL', sub:'Key-Value, Document, Graph & Co.', icon:'🌐', color:'k', skillType:'match'},
+];
+
+if(typeof module !== 'undefined' && module.exports){
+  module.exports = {SEED_DB, SQL_TASKS_W5, SQL_TASKS_W6, QUIZ, BOSS, MATCH, WORLDS, SQL_CHEATSHEET};
+}
+/* ============================================================
+   SQL-Arena — Engine: Persistenz, State, HUD, Weltkarte, Navigation
+   ============================================================ */
+const mem = {};
+const Store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v===null ? d : JSON.parse(v); }catch(e){ return (k in mem) ? mem[k] : d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} mem[k] = v; },
+};
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function pick(arr, n){ return shuffle(arr).slice(0, Math.min(n, arr.length)); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtNum(n){ return (Math.round(n*100)/100).toLocaleString('de-AT'); }
+
+/* ---------- State ---------- */
+const DEFAULT_STATE = () => ({
+  xp: 0, coins: 0, bestStreak: 0,
+  progress: {}, // {w1:{quiz:{done,stars,best}, skill:{...}, boss:{...}}}
+  examBest: null,
+  weak: {}, // {w1:{ok:0,total:0}}
+});
+
+let S = Store.get('sqla:state', null) || DEFAULT_STATE();
+function saveState(){ Store.set('sqla:state', S); }
+function level(){ return Math.floor(S.xp/120) + 1; }
+function xpIntoLevel(){ return S.xp % 120; }
+function addXp(n){ S.xp += n; saveState(); renderHud(); }
+function addCoins(n){ S.coins = Math.max(0, S.coins + n); saveState(); renderHud(); }
+function noteStreak(n){ if(n > S.bestStreak){ S.bestStreak = n; saveState(); } }
+function noteWeak(worldId, ok){
+  if(!S.weak[worldId]) S.weak[worldId] = {ok:0, total:0};
+  S.weak[worldId].total++;
+  if(ok) S.weak[worldId].ok++;
+  saveState();
+}
+function stageProg(worldId, stage){
+  if(!S.progress[worldId]) S.progress[worldId] = {};
+  if(!S.progress[worldId][stage]) S.progress[worldId][stage] = {done:false, stars:0, best:0};
+  return S.progress[worldId][stage];
+}
+function completeStage(worldId, stage, stars, scorePct){
+  const p = stageProg(worldId, stage);
+  p.done = true;
+  p.stars = Math.max(p.stars, stars);
+  p.best = Math.max(p.best, scorePct);
+  saveState();
+}
+function isStageUnlocked(worldIdx, stageIdx){
+  // stageIdx: 0=quiz,1=skill,2=boss innerhalb einer Welt
+  if(worldIdx === 0 && stageIdx === 0) return true;
+  const worlds = WORLDS;
+  if(stageIdx === 0){
+    // erste Stage einer Welt: braucht Boss der Vorwelt (oder Welt 0)
+    if(worldIdx === 0) return true;
+    const prevWorld = worlds[worldIdx-1];
+    return !!(S.progress[prevWorld.id] && S.progress[prevWorld.id].boss && S.progress[prevWorld.id].boss.done);
+  }
+  const stages = ['quiz','skill','boss'];
+  const w = worlds[worldIdx];
+  const prevStage = stages[stageIdx-1];
+  return !!(S.progress[w.id] && S.progress[w.id][prevStage] && S.progress[w.id][prevStage].done);
+}
+function isExamUnlocked(){
+  const last = WORLDS[WORLDS.length-1];
+  return !!(S.progress[last.id] && S.progress[last.id].boss && S.progress[last.id].boss.done);
+}
+function worldStars(worldId){
+  const p = S.progress[worldId];
+  if(!p) return 0;
+  return (p.quiz?.stars||0) + (p.skill?.stars||0) + (p.boss?.stars||0);
+}
+
+/* ---------- Navigation / Screen-Root ---------- */
+const root = () => document.getElementById('app');
+let currentCleanup = null;
+function nav(renderFn){
+  if(currentCleanup){ try{ currentCleanup(); }catch(e){} currentCleanup = null; }
+  const el = root();
+  el.innerHTML = '';
+  el.scrollTop = 0;
+  window.scrollTo({top:0, behavior:'instant'});
+  const cleanup = renderFn(el);
+  if(typeof cleanup === 'function') currentCleanup = cleanup;
+  renderHud();
+}
+
+/* ---------- HUD ---------- */
+function renderHud(){
+  const hud = document.getElementById('hud');
+  if(!hud) return;
+  const pct = Math.round((xpIntoLevel()/120)*100);
+  hud.innerHTML = `
+    <button class="hbrand" id="hudHome" aria-label="Zur Weltkarte">🎮 <span>SQL-<b>Arena</b></span></button>
+    <div class="hstat" title="Level"><span class="hlv">Lvl ${level()}</span><span class="hxpbar"><i style="width:${pct}%"></i></span></div>
+    <div class="hstat hcoin" title="Münzen">🪙 ${S.coins}</div>
+  `;
+  const homeBtn = document.getElementById('hudHome');
+  if(homeBtn) homeBtn.onclick = () => nav(renderMap);
+}
+
+/* ---------- Feedback-Helfer ---------- */
+function toast(msg, kind){
+  const t = document.createElement('div');
+  t.className = 'toast ' + (kind||'');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(()=> t.classList.add('show'));
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 300); }, 1800);
+}
+function confettiBurst(container){
+  const n = 22;
+  for(let i=0;i<n;i++){
+    const s = document.createElement('span');
+    s.className = 'confetti';
+    s.style.setProperty('--x', (Math.random()*2-1).toFixed(2));
+    s.style.setProperty('--r', (Math.random()*360).toFixed(0)+'deg');
+    s.style.setProperty('--d', (0.6+Math.random()*0.6).toFixed(2)+'s');
+    s.style.background = ['var(--s)','var(--a)','var(--b)','var(--k)','var(--mk)'][i%5];
+    container.appendChild(s);
+    setTimeout(()=>s.remove(), 1300);
+  }
+}
+function starsHtml(n, max){
+  max = max||3;
+  let h = '';
+  for(let i=1;i<=max;i++) h += `<span class="star ${i<=n?'on':''}">★</span>`;
+  return `<span class="stars">${h}</span>`;
+}
+
+/* ---------- Weltkarte (Home) ---------- */
+const STAGE_META = {
+  quiz: {label:'Quiz-Sprint', icon:'⚡', desc:'Schnelle Multiple-Choice-Runde'},
+  skill: {label:null, icon:'🛠️', desc:null}, // per-Welt gesetzt
+  boss: {label:'Boss', icon:'👑', desc:'Schwerer Gauntlet — schließt die Welt ab'},
+};
+function skillMeta(world){
+  return world.skillType === 'sql'
+    ? {label:'SQL-Werkstatt', icon:'⌨️', desc:'Echte SQL-Abfragen live ausführen'}
+    : {label:'Match-Duell', icon:'🧩', desc:'Begriffe & Szenarien zuordnen'};
+}
+
+function renderMap(el){
+  const wrap = document.createElement('div');
+  wrap.className = 'mapwrap';
+  let html = `
+    <section class="hero">
+      <p class="eyebrow">SQL-ARENA · Lernspiel zur Datenbank-Werkstatt</p>
+      <h1>Level up deine <mark>Datenbank-Skills</mark></h1>
+      <p class="herotxt">7 Welten, echte SQL-Aufgaben und ein Boss-Gauntlet pro Thema. Sammle XP, Sterne und Münzen — und werde fit für die Prüfung.</p>
+      <div class="herostats">
+        <div><b>${S.xp}</b><span>XP gesamt</span></div>
+        <div><b>${totalStars()}</b><span>von ${WORLDS.length*9} Sternen</span></div>
+        <div><b>${S.bestStreak}</b><span>beste Serie</span></div>
+      </div>
+    </section>
+    <div class="path">
+  `;
+  WORLDS.forEach((w, wi) => {
+    const sMeta = skillMeta(w);
+    const stages = [
+      Object.assign({key:'quiz'}, STAGE_META.quiz),
+      Object.assign({key:'skill'}, sMeta),
+      Object.assign({key:'boss'}, STAGE_META.boss),
+    ];
+    html += `<div class="worldsec g-${w.color}">
+      <div class="wsechead">
+        <span class="wicon">${w.icon}</span>
+        <div><h2>Welt ${w.n} · ${esc(w.title)}</h2><p>${esc(w.sub)}</p></div>
+        <div class="wstars">${starsHtml(worldStars(w.id), 9)}</div>
+      </div>
+      <div class="stagerow">`;
+    stages.forEach((st, si) => {
+      const unlocked = isStageUnlocked(wi, si);
+      const prog = (S.progress[w.id] && S.progress[w.id][st.key]) || {done:false, stars:0};
+      const cls = !unlocked ? 'locked' : (prog.done ? 'done' : 'ready');
+      html += `<button class="node ${cls}" data-w="${w.id}" data-s="${st.key}" ${unlocked?'':'disabled'}>
+        <span class="nicon">${unlocked ? st.icon : '🔒'}</span>
+        <span class="nlabel">${esc(st.label)}</span>
+        ${prog.done ? starsHtml(prog.stars,3) : (unlocked ? '<span class="nhint">'+esc(st.desc)+'</span>' : '<span class="nhint">Gesperrt</span>')}
+      </button>`;
+    });
+    html += `</div></div>`;
+  });
+  const examUnlocked = isExamUnlocked();
+  html += `<div class="worldsec finalesec">
+      <div class="wsechead">
+        <span class="wicon">🏆</span>
+        <div><h2>Finale · Prüfungsarena</h2><p>Gemischter Prüfungssimulator, alle Themen</p></div>
+      </div>
+      <div class="stagerow">
+        <button class="node examnode ${examUnlocked ? (S.examBest!=null?'done':'ready') : 'locked'}" id="examBtn" ${examUnlocked?'':'disabled'}>
+          <span class="nicon">${examUnlocked ? '🎓' : '🔒'}</span>
+          <span class="nlabel">Prüfungsarena starten</span>
+          <span class="nhint">${examUnlocked ? (S.examBest!=null ? 'Bestes Ergebnis: '+S.examBest+'%' : 'Timed Exam · alle Welten') : 'Schließe alle Boss-Level ab'}</span>
+        </button>
+      </div>
+    </div>`;
+  html += `</div>`;
+  wrap.innerHTML = html;
+  el.appendChild(wrap);
+
+  wrap.querySelectorAll('.node[data-w]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const w = btn.getAttribute('data-w');
+      const s = btn.getAttribute('data-s');
+      openStage(w, s);
+    });
+  });
+  const examBtn = wrap.querySelector('#examBtn');
+  if(examBtn) examBtn.addEventListener('click', () => nav(renderExamIntro));
+
+  // Autoscroll zum aktuellen (nächsten offenen) Knoten
+  const nextNode = wrap.querySelector('.node.ready') || wrap.querySelector('.node.done');
+  if(nextNode){ setTimeout(()=> nextNode.scrollIntoView({block:'center', behavior:'instant'}), 30); }
+}
+
+function totalStars(){
+  let t = 0;
+  WORLDS.forEach(w => t += worldStars(w.id));
+  return t;
+}
+
+function openStage(worldId, stageKey){
+  const world = WORLDS.find(w => w.id === worldId);
+  if(!world) return;
+  if(stageKey === 'quiz') nav(el => renderStageIntro(el, world, 'quiz'));
+  else if(stageKey === 'boss') nav(el => renderStageIntro(el, world, 'boss'));
+  else nav(el => renderStageIntro(el, world, 'skill'));
+}
+
+function renderStageIntro(el, world, stageKey){
+  const sMeta = stageKey==='skill' ? skillMeta(world) : STAGE_META[stageKey];
+  const wrap = document.createElement('div');
+  wrap.className = 'introwrap';
+  wrap.innerHTML = `
+    <button class="backlnk" id="back">← Weltkarte</button>
+    <div class="introcard g-${world.color}">
+      <span class="wicon big">${sMeta.icon}</span>
+      <p class="eyebrow">Welt ${world.n} · ${esc(world.title)}</p>
+      <h2>${esc(sMeta.label)}</h2>
+      <p>${esc(sMeta.desc)}</p>
+      <button class="btn primary big" id="startStage">Los geht's</button>
+    </div>
+  `;
+  el.appendChild(wrap);
+  wrap.querySelector('#back').onclick = () => nav(renderMap);
+  wrap.querySelector('#startStage').onclick = () => {
+    if(stageKey === 'quiz') nav(el2 => StageQuiz.render(el2, world, {pool: QUIZ[world.id], count:6, timeLimit:28, lives:3, stageKey:'quiz', xpPer:10, coinPer:2}));
+    else if(stageKey === 'boss') nav(el2 => StageQuiz.render(el2, world, {pool: BOSS[world.id], count:6, timeLimit:24, lives:3, stageKey:'boss', xpPer:16, coinPer:3, boss:true}));
+    else if(world.skillType === 'sql') nav(el2 => StageSql.render(el2, world, {tasks: world.id==='w5'?SQL_TASKS_W5:SQL_TASKS_W6}));
+    else nav(el2 => StageMatch.render(el2, world, {pairs: pick(MATCH[world.id], Math.min(6, MATCH[world.id].length)), timeLimit: 90}));
+  };
+}
+
+const Engine = {
+  Store, shuffle, pick, esc, fmtNum, S, saveState, level, xpIntoLevel, addXp, addCoins, noteStreak, noteWeak,
+  stageProg, completeStage, isStageUnlocked, isExamUnlocked, worldStars, totalStars,
+  nav, root, renderHud, toast, confettiBurst, starsHtml, openStage,
+};
+/* ============================================================
+   Stage: Quiz-Sprint / Boss — schnelle Multiple-Choice-Runde
+   ============================================================ */
+const StageQuiz = (() => {
+  function render(el, world, cfg){
+    const items = shuffle(cfg.pool).slice(0, Math.min(cfg.count, cfg.pool.length)).map(q => {
+      const order = shuffle(q.o.map((_,i)=>i));
+      return {q: q.q, o: order.map(i=>q.o[i]), c: order.indexOf(q.c), e: q.e};
+    });
+    let idx = 0, lives = cfg.lives, correct = 0, streak = 0, xpGain = 0, coinGain = 0, timer = null, timeLeft = 0, answered = false;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'stagewrap quizwrap g-'+world.color;
+    el.appendChild(wrap);
+
+    function clearTimer(){ if(timer){ clearInterval(timer); timer = null; } }
+
+    function paint(){
+      const it = items[idx];
+      timeLeft = cfg.timeLimit;
+      answered = false;
+      wrap.innerHTML = `
+        <div class="stagehead">
+          <button class="backlnk" id="quit">✕</button>
+          <div class="qprog"><i style="width:${Math.round(idx/items.length*100)}%"></i></div>
+          <div class="lives">${'❤️'.repeat(lives)}${'🖤'.repeat(cfg.lives-lives)}</div>
+        </div>
+        <div class="streakbadge ${streak>=3?'hot':''}" ${streak<2?'hidden':''}>🔥 ${streak}er-Serie</div>
+        <div class="timerbar"><i id="tbar" style="width:100%"></i></div>
+        <h3 class="qtext">${esc(it.q)}</h3>
+        <div class="opts">
+          ${it.o.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o)}</button>`).join('')}
+        </div>
+        <p class="qcount">Frage ${idx+1} / ${items.length}</p>
+      `;
+      wrap.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => answer(parseInt(b.getAttribute('data-i'),10))));
+      wrap.querySelector('#quit').onclick = () => confirmQuit();
+      startTimer();
+    }
+
+    function startTimer(){
+      clearTimer();
+      const bar = () => wrap.querySelector('#tbar');
+      timer = setInterval(() => {
+        timeLeft -= 0.1;
+        const b = bar();
+        if(b) b.style.width = Math.max(0, (timeLeft/cfg.timeLimit*100)) + '%';
+        if(timeLeft <= 0){ clearTimer(); answer(-1); }
+      }, 100);
+    }
+
+    function confirmQuit(){
+      clearTimer();
+      nav(el2 => renderStageIntro(el2, world, cfg.stageKey));
+    }
+
+    function answer(i){
+      if(answered) return;
+      answered = true;
+      clearTimer();
+      const it = items[idx];
+      const ok = i === it.c;
+      const btns = wrap.querySelectorAll('.opt');
+      btns.forEach((b,bi) => {
+        b.disabled = true;
+        if(bi === it.c) b.classList.add('correct');
+        else if(bi === i) b.classList.add('wrong');
+      });
+      if(ok){
+        correct++; streak++;
+        noteStreak(streak);
+        const mult = streak>=6?3:(streak>=3?2:1);
+        xpGain += cfg.xpPer * mult;
+        coinGain += cfg.coinPer;
+        toast('+'+(cfg.xpPer*mult)+' XP'+(mult>1?' (×'+mult+' Serie!)':''), 'ok');
+      } else {
+        lives--; streak = 0;
+      }
+      noteWeak(world.id, ok);
+      const expl = document.createElement('div');
+      expl.className = 'expl ' + (ok?'ok':'no');
+      expl.innerHTML = `<b>${ok?'Richtig!':(i===-1?'Zeit abgelaufen.':'Nicht ganz.')}</b> ${esc(it.e||'')}
+        <div class="nextrow"><button class="btn primary" id="nextBtn">Weiter →</button></div>`;
+      wrap.appendChild(expl);
+      const advance = () => {
+        if(lives <= 0){ finish(false); return; }
+        idx++;
+        if(idx >= items.length){ finish(true); return; }
+        paint();
+      };
+      const nb = wrap.querySelector('#nextBtn');
+      nb.focus();
+      nb.onclick = advance;
+      wrap.addEventListener('keydown', function onKey(e){
+        if(e.key==='Enter'){ wrap.removeEventListener('keydown', onKey); advance(); }
+      });
+    }
+
+    function finish(passed){
+      clearTimer();
+      const pct = Math.round(correct/items.length*100);
+      let stars = 0;
+      if(passed){
+        stars = pct>=100 ? 3 : (pct>=70 ? 2 : 1);
+        xpGain += 15;
+        completeStage(world.id, cfg.stageKey, stars, pct);
+      }
+      wrap.innerHTML = '';
+      const card = document.createElement('div');
+      card.className = 'resultcard ' + (passed?'win':'lose');
+      card.innerHTML = passed ? `
+        <div class="confwrap"></div>
+        <span class="ricon">${cfg.boss?'👑':'🎉'}</span>
+        <h2>${cfg.boss?'Boss besiegt!':'Runde geschafft!'}</h2>
+        <p>${correct} von ${items.length} richtig · ${pct}%</p>
+        ${starsHtml(stars,3)}
+        <p class="rewards">+${xpGain} XP · +${coinGain} 🪙</p>
+        <div class="rbtns">
+          <button class="btn" id="again">Nochmal</button>
+          <button class="btn primary" id="toMap">Weiter zur Karte</button>
+        </div>
+      ` : `
+        <span class="ricon">💔</span>
+        <h2>Leben aufgebraucht</h2>
+        <p>${correct} von ${idx+1} richtig geschafft — versuch's gleich nochmal!</p>
+        <div class="rbtns">
+          <button class="btn primary" id="again">Nochmal versuchen</button>
+          <button class="btn" id="toMap">Zur Karte</button>
+        </div>
+      `;
+      wrap.appendChild(card);
+      if(passed){ addXp(xpGain); addCoins(coinGain); confettiBurst(card.querySelector('.confwrap')); }
+      card.querySelector('#again').onclick = () => nav(el2 => render(el2, world, cfg));
+      card.querySelector('#toMap').onclick = () => nav(renderMap);
+    }
+
+    paint();
+    return () => clearTimer();
+  }
+  return {render};
+})();
+/* ============================================================
+   Stage: Match-Duell — Begriffe/Szenarien gegen Zuordnung, gegen die Zeit
+   ============================================================ */
+const StageMatch = (() => {
+  function render(el, world, cfg){
+    const pairs = cfg.pairs.map((p,i) => ({...p, id:i}));
+    const leftItems = shuffle(pairs.map(p => ({id:p.id, txt:p.a})));
+    const rightItems = shuffle(pairs.map(p => ({id:p.id, txt:p.b})));
+    let matched = new Set(), mistakes = 0, streak = 0, selL = null, selR = null, timeLeft = cfg.timeLimit, timer = null, xpGain = 0, coinGain = 0, ended = false;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'stagewrap matchwrap g-'+world.color;
+    el.appendChild(wrap);
+
+    function paint(){
+      wrap.innerHTML = `
+        <div class="stagehead">
+          <button class="backlnk" id="quit">✕</button>
+          <div class="qprog"><i style="width:${Math.round(matched.size/pairs.length*100)}%"></i></div>
+          <div class="mtime" id="mtime">⏱ ${Math.ceil(timeLeft)}s</div>
+        </div>
+        <div class="streakbadge ${streak>=3?'hot':''}" ${streak<2?'hidden':''}>🔥 ${streak}er-Serie</div>
+        <p class="qcount">${matched.size} / ${pairs.length} zugeordnet ${mistakes?(' · '+mistakes+' Fehlversuche'):''}</p>
+        <div class="matchgrid">
+          <div class="mcol" id="colL">${leftItems.map(it => matchBtn(it,'l')).join('')}</div>
+          <div class="mcol" id="colR">${rightItems.map(it => matchBtn(it,'r')).join('')}</div>
+        </div>
+      `;
+      wrap.querySelector('#quit').onclick = () => { clearTimer(); nav(el2 => renderStageIntro(el2, world, 'skill')); };
+      wrap.querySelectorAll('.mitem').forEach(b => b.addEventListener('click', onPick));
+    }
+    function matchBtn(it, side){
+      const done = matched.has(it.id);
+      const sel = (side==='l' && selL===it.id) || (side==='r' && selR===it.id);
+      return `<button class="mitem ${done?'done':''} ${sel?'sel':''}" data-side="${side}" data-id="${it.id}" ${done?'disabled':''}>${esc(it.txt)}</button>`;
+    }
+
+    function onPick(e){
+      if(ended) return;
+      const side = e.currentTarget.getAttribute('data-side');
+      const id = parseInt(e.currentTarget.getAttribute('data-id'),10);
+      if(matched.has(id)) return;
+      if(side==='l') selL = (selL===id) ? null : id; else selR = (selR===id) ? null : id;
+      paint();
+      if(selL!=null && selR!=null){
+        if(selL === selR){
+          matched.add(selL);
+          streak++; noteStreak(streak);
+          const mult = streak>=6?3:(streak>=3?2:1);
+          xpGain += 12*mult; coinGain += 2;
+          toast('Match! +'+(12*mult)+' XP', 'ok');
+          selL = null; selR = null;
+          paint();
+          if(matched.size === pairs.length) finish(true);
+        } else {
+          mistakes++; streak = 0;
+          const l = wrap.querySelector(`.mitem[data-side="l"][data-id="${selL}"]`);
+          const r = wrap.querySelector(`.mitem[data-side="r"][data-id="${selR}"]`);
+          if(l) l.classList.add('shake'); if(r) r.classList.add('shake');
+          timeLeft = Math.max(1, timeLeft - 2);
+          setTimeout(() => { selL=null; selR=null; paint(); }, 420);
+        }
+      }
+    }
+
+    function clearTimer(){ if(timer){ clearInterval(timer); timer=null; } }
+    function startTimer(){
+      timer = setInterval(() => {
+        timeLeft -= 0.2;
+        const t = wrap.querySelector('#mtime');
+        if(t) t.textContent = '⏱ ' + Math.max(0,Math.ceil(timeLeft)) + 's';
+        if(timeLeft <= 0){ clearTimer(); finish(matched.size===pairs.length); }
+      }, 200);
+    }
+
+    function finish(passed){
+      ended = true;
+      clearTimer();
+      let stars = 0;
+      if(passed){
+        stars = mistakes===0 ? 3 : (mistakes<=2 ? 2 : 1);
+        xpGain += 15;
+        completeStage(world.id, 'skill', stars, Math.round(matched.size/pairs.length*100));
+      }
+      wrap.innerHTML = '';
+      const card = document.createElement('div');
+      card.className = 'resultcard ' + (passed?'win':'lose');
+      card.innerHTML = passed ? `
+        <div class="confwrap"></div>
+        <span class="ricon">🧩</span>
+        <h2>Alle zugeordnet!</h2>
+        <p>${mistakes} Fehlversuche</p>
+        ${starsHtml(stars,3)}
+        <p class="rewards">+${xpGain} XP · +${coinGain} 🪙</p>
+        <div class="rbtns">
+          <button class="btn" id="again">Nochmal</button>
+          <button class="btn primary" id="toMap">Weiter zur Karte</button>
+        </div>
+      ` : `
+        <span class="ricon">⏱️</span>
+        <h2>Zeit abgelaufen</h2>
+        <p>${matched.size} von ${pairs.length} geschafft — nochmal versuchen?</p>
+        <div class="rbtns">
+          <button class="btn primary" id="again">Nochmal versuchen</button>
+          <button class="btn" id="toMap">Zur Karte</button>
+        </div>
+      `;
+      wrap.appendChild(card);
+      if(passed){ addXp(xpGain); addCoins(coinGain); confettiBurst(card.querySelector('.confwrap')); }
+      card.querySelector('#again').onclick = () => nav(el2 => render(el2, world, {pairs: pick(MATCH[world.id], Math.min(6, MATCH[world.id].length)), timeLimit: cfg.timeLimit}));
+      card.querySelector('#toMap').onclick = () => nav(renderMap);
+    }
+
+    paint();
+    startTimer();
+    return () => clearTimer();
+  }
+  return {render};
+})();
+/* ============================================================
+   Stage: SQL-Werkstatt — echte SQL-Abfragen live ausführen & prüfen
+   Kein Leben-Verlust: hier darf man in Ruhe ausprobieren. Hilfe kostet
+   nur Münzen, nie den Fortschritt.
+   ============================================================ */
+const StageSql = (() => {
+  function render(el, world, cfg){
+    const tasks = cfg.tasks;
+    let idx = 0, hintIdx = {}, xpGain = 0, coinGain = 0, hintsUsed = 0, wrongSubs = 0, solutionsShown = {}, attempts = {}, ended = false;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'stagewrap sqlwrap g-'+world.color;
+    el.appendChild(wrap);
+
+    function schemaHtml(){
+      return Object.keys(SEED_DB).map(t => {
+        const rows = SEED_DB[t].slice(0,3);
+        const cols = Object.keys(SEED_DB[t][0]||{});
+        return `<div class="schemat">
+          <h5>${t} <span>(${SEED_DB[t].length} Zeilen)</span></h5>
+          <div class="tblwrap"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+          <tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${r[c]===null?'<i>NULL</i>':esc(r[c])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+        </div>`;
+      }).join('');
+    }
+    function cheatsheetHtml(){
+      return SQL_CHEATSHEET.map(c => `<div class="cheatcard"><h6>${esc(c.t)}</h6><pre>${esc(c.c)}</pre></div>`).join('');
+    }
+
+    function paint(){
+      const t = tasks[idx];
+      hintIdx[t.id] = hintIdx[t.id] || 0;
+      attempts[t.id] = attempts[t.id] || 0;
+      const hi = hintIdx[t.id];
+      const hintsLeft = t.hints.length - hi;
+      const nextHintFree = hi === 0;
+      wrap.innerHTML = `
+        <div class="stagehead">
+          <button class="backlnk" id="quit">✕</button>
+          <div class="qprog"><i style="width:${Math.round(idx/tasks.length*100)}%"></i></div>
+          <div class="attemptct">Aufgabe ${idx+1}/${tasks.length}</div>
+        </div>
+        ${idx===0 ? `<p class="sqlintro">💛 Kein Herz-Verlust hier — probiere so oft du willst mit <b>▶ Ausführen</b>. Fest hängen? Der <b>Spickzettel</b> und <b>Tipps</b> helfen weiter.</p>` : ''}
+        <p class="qcount">${'⭐'.repeat(t.diff)} Schwierigkeit</p>
+        <div class="sqltask">${t.prompt}</div>
+        <div class="refrow">
+          <details class="schemabox"><summary>📋 Tabellen anzeigen</summary><div class="schemas">${schemaHtml()}</div></details>
+          <details class="schemabox cheatbox"><summary>📎 SQL-Spickzettel</summary><div class="cheats">${cheatsheetHtml()}</div></details>
+        </div>
+        <textarea id="sqlin" class="sqlin" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="SELECT ...">${Engine_lastDraft[t.id]||''}</textarea>
+        <div class="sqlbtns">
+          <button class="btn" id="runBtn">▶ Ausführen</button>
+          <button class="btn hintbtn" id="hintBtn" ${hintsLeft<=0?'disabled':''}>💡 Tipp ${hintsLeft<=0?'(alle gezeigt)':(nextHintFree?'(gratis)':'(−4 🪙)')}</button>
+          <button class="btn solbtn" id="solBtn">🔓 Lösung zeigen (−8 🪙)</button>
+          <button class="btn primary" id="subBtn">✓ Antwort abgeben</button>
+        </div>
+        <div id="sqlout" class="sqlout"></div>
+        <div id="hintout" class="hintout"></div>
+      `;
+      wrap.querySelector('#quit').onclick = () => nav(el2 => renderStageIntro(el2, world, 'skill'));
+      const ta = wrap.querySelector('#sqlin');
+      ta.addEventListener('input', () => { Engine_lastDraft[t.id] = ta.value; });
+      ta.addEventListener('keydown', (e) => { if((e.ctrlKey||e.metaKey) && e.key==='Enter'){ e.preventDefault(); runQuery(); } });
+      wrap.querySelector('#runBtn').onclick = runQuery;
+      wrap.querySelector('#subBtn').onclick = submit;
+      wrap.querySelector('#hintBtn').onclick = showHint;
+      wrap.querySelector('#solBtn').onclick = showSolution;
+    }
+
+    function runQuery(){
+      const t = tasks[idx];
+      const ta = wrap.querySelector('#sqlin');
+      const out = wrap.querySelector('#sqlout');
+      const sql = ta.value.trim();
+      if(!sql){ out.innerHTML = '<p class="sqlmsg warn">Schreib zuerst eine SQL-Abfrage.</p>'; return; }
+      const db = SQLEngine.cloneDb(SEED_DB);
+      const r = SQLEngine.run(sql, db, {mutate:true});
+      if(!r.ok){
+        out.innerHTML = `<p class="sqlmsg err">⚠️ Fehler: ${esc(r.error)}</p>`;
+        return;
+      }
+      if(r.type === 'select'){
+        out.innerHTML = renderTable(r.columns, r.rows);
+      } else {
+        out.innerHTML = `<p class="sqlmsg ok">✓ Ausgeführt — ${r.affected} Zeile(n) betroffen.</p>` + renderTable(Object.keys(db[t.table][0]||{}), db[t.table].slice(0,8).map(row=>Object.values(row)));
+      }
+    }
+
+    function renderTable(cols, rows){
+      if(!cols.length) return '<p class="sqlmsg">Kein Ergebnis.</p>';
+      const shown = rows.slice(0, 30);
+      return `<div class="tblwrap"><table class="restbl"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>
+        <tbody>${shown.length ? shown.map(r=>`<tr>${r.map(v=>`<td>${v===null||v===undefined?'<i>NULL</i>':esc(v)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${cols.length}"><i>0 Zeilen</i></td></tr>`}</tbody>
+      </table></div><p class="rowcount">${rows.length} Zeile(n)${rows.length>30?' (erste 30 gezeigt)':''}</p>`;
+    }
+
+    function showHint(){
+      const t = tasks[idx];
+      const hi = hintIdx[t.id] || 0;
+      if(hi >= t.hints.length) return;
+      const free = hi === 0;
+      if(!free){
+        if(S.coins < 4){ toast('Nicht genug Münzen für einen weiteren Tipp.', 'no'); return; }
+        addCoins(-4);
+      }
+      hintsUsed++;
+      hintIdx[t.id] = hi+1;
+      const hout = wrap.querySelector('#hintout');
+      hout.innerHTML += `<p class="hintline">💡 ${esc(t.hints[hi])}</p>`;
+      paint_refreshBtns();
+    }
+
+    function showSolution(){
+      const t = tasks[idx];
+      if(S.coins < 8){ toast('Nicht genug Münzen für die Lösung.', 'no'); return; }
+      addCoins(-8);
+      solutionsShown[t.id] = true;
+      const ta = wrap.querySelector('#sqlin');
+      ta.value = t.sol;
+      Engine_lastDraft[t.id] = t.sol;
+      const hout = wrap.querySelector('#hintout');
+      hout.innerHTML += `<p class="hintline solreveal">🔓 Lösung eingefügt — schau sie dir an, dann klick <b>▶ Ausführen</b> und <b>✓ Antwort abgeben</b>, damit sie wirklich hängen bleibt.</p>`;
+    }
+
+    function paint_refreshBtns(){
+      // Tipp-Button neu bewerten, ohne die ganze Aufgabe neu zu zeichnen (Texteingabe bleibt erhalten)
+      const t = tasks[idx];
+      const hi = hintIdx[t.id] || 0;
+      const hintsLeft = t.hints.length - hi;
+      const nextHintFree = hi === 0;
+      const btn = wrap.querySelector('#hintBtn');
+      if(btn){
+        btn.disabled = hintsLeft<=0;
+        btn.textContent = '💡 Tipp ' + (hintsLeft<=0?'(alle gezeigt)':(nextHintFree?'(gratis)':'(−4 🪙)'));
+      }
+    }
+
+    function submit(){
+      const t = tasks[idx];
+      const ta = wrap.querySelector('#sqlin');
+      const out = wrap.querySelector('#sqlout');
+      const sql = ta.value.trim();
+      if(!sql){ out.innerHTML = '<p class="sqlmsg warn">Schreib zuerst eine SQL-Abfrage.</p>'; return; }
+      attempts[t.id] = (attempts[t.id]||0) + 1;
+      const userDb = SQLEngine.cloneDb(SEED_DB);
+      const userRes = SQLEngine.run(sql, userDb, {mutate:true});
+      if(!userRes.ok){
+        out.innerHTML = `<p class="sqlmsg err">⚠️ Fehler: ${esc(userRes.error)}</p>`;
+        onWrong();
+        return;
+      }
+      const solDb = SQLEngine.cloneDb(SEED_DB);
+      const solRes = SQLEngine.run(t.sol, solDb, {mutate:true});
+      let ok;
+      if(t.type === 'select'){
+        out.innerHTML = renderTable(userRes.columns, userRes.rows);
+        ok = SQLEngine.compareResults(userRes, solRes, !!t.orderMatters);
+      } else {
+        out.innerHTML = `<p class="sqlmsg">${userRes.affected} Zeile(n) betroffen.</p>` + renderTable(Object.keys(userDb[t.table][0]||userDb[t.table]||{}), (userDb[t.table]||[]).slice(0,8).map(r=>Object.values(r)));
+        ok = compareTableRows(userDb[t.table], solDb[t.table]);
+      }
+      noteWeak(world.id, ok);
+      if(ok) onCorrect(); else onWrong();
+    }
+
+    function compareTableRows(a, b){
+      if(!a || !b || a.length !== b.length) return false;
+      const norm = rows => rows.map(r => JSON.stringify(Object.keys(r).sort().map(k=>[k, typeof r[k]==='number'?Math.round(r[k]*1e6)/1e6:r[k]]))).sort();
+      return JSON.stringify(norm(a)) === JSON.stringify(norm(b));
+    }
+
+    function onCorrect(){
+      const t = tasks[idx];
+      const cleanSolve = !solutionsShown[t.id] && (hintIdx[t.id]||0)===0 && (attempts[t.id]||1)<=1;
+      xpGain += cleanSolve ? 18 : 12;
+      coinGain += 3;
+      toast('Richtig! +'+(cleanSolve?18:12)+' XP', 'ok');
+      const msg = document.createElement('div');
+      msg.className = 'expl ok';
+      msg.innerHTML = '<b>Passt!</b> So sieht eine Musterlösung aus: <code>'+esc(t.sol)+'</code>'
+        + `<div class="nextrow"><button class="btn primary" id="nextBtn">${idx+1>=tasks.length?'Werkstatt abschließen':'Nächste Aufgabe →'}</button></div>`;
+      wrap.appendChild(msg);
+      wrap.querySelectorAll('.sqlbtns button').forEach(b => b.disabled = true);
+      const nb = msg.querySelector('#nextBtn');
+      nb.focus();
+      nb.onclick = () => {
+        idx++;
+        if(idx >= tasks.length){ finish(true); return; }
+        paint();
+      };
+    }
+    function onWrong(){
+      wrongSubs++;
+      toast('Noch nicht ganz — schau dir die Fehlermeldung/Ausgabe an und versuch\'s einfach nochmal. Kostet nichts!', 'no');
+      const t = tasks[idx];
+      if((attempts[t.id]||0) >= 2){
+        const hout = wrap.querySelector('#hintout');
+        if(hout && !hout.querySelector('.nudge')){
+          hout.innerHTML += `<p class="hintline nudge">🤔 Zwei Versuche schon — vielleicht hilft ein 💡 Tipp oder ein Blick in den 📎 Spickzettel?</p>`;
+        }
+      }
+    }
+
+    function finish(passed){
+      ended = true;
+      const trouble = hintsUsed + wrongSubs + Object.keys(solutionsShown).length*3;
+      const stars = trouble===0 ? 3 : (trouble<=4 ? 2 : 1);
+      xpGain += 20;
+      completeStage(world.id, 'skill', stars, 100);
+      wrap.innerHTML = '';
+      const card = document.createElement('div');
+      card.className = 'resultcard win';
+      card.innerHTML = `
+        <div class="confwrap"></div>
+        <span class="ricon">⌨️</span>
+        <h2>SQL-Werkstatt geschafft!</h2>
+        <p>${tasks.length} Aufgaben gelöst · ${hintsUsed} Tipps · ${wrongSubs} Fehlversuche</p>
+        ${starsHtml(stars,3)}
+        <p class="rewards">+${xpGain} XP · +${coinGain} 🪙</p>
+        <div class="rbtns">
+          <button class="btn" id="again">Nochmal</button>
+          <button class="btn primary" id="toMap">Weiter zur Karte</button>
+        </div>
+      `;
+      wrap.appendChild(card);
+      addXp(xpGain); addCoins(coinGain); confettiBurst(card.querySelector('.confwrap'));
+      card.querySelector('#again').onclick = () => nav(el2 => render(el2, world, cfg));
+      card.querySelector('#toMap').onclick = () => nav(renderMap);
+    }
+
+    paint();
+    return () => {};
+  }
+  return {render};
+})();
+const Engine_lastDraft = {};
+/* ============================================================
+   Finale: Prüfungsarena — gemischter, zeitbasierter Prüfungssimulator
+   ============================================================ */
+function renderExamIntro(el){
+  const wrap = document.createElement('div');
+  wrap.className = 'introwrap';
+  wrap.innerHTML = `
+    <button class="backlnk" id="back">← Weltkarte</button>
+    <div class="introcard g-warn">
+      <span class="wicon big">🏆</span>
+      <p class="eyebrow">Finale</p>
+      <h2>Prüfungsarena</h2>
+      <p>Gemischte Fragen aus allen 7 Welten, plus echte SQL-Aufgaben. Kein Herz-Limit — wie bei der echten Prüfung beantwortest du einfach alles, was kommt, und siehst am Ende deine Schwachstellen.</p>
+      <div class="examchoices">
+        <button class="btn primary big" id="short">Kurzcheck — 15 Fragen</button>
+        <button class="btn big" id="full">Volltest — 25 Fragen</button>
+      </div>
+    </div>
+  `;
+  el.appendChild(wrap);
+  wrap.querySelector('#back').onclick = () => nav(renderMap);
+  wrap.querySelector('#short').onclick = () => nav(el2 => StageExam.render(el2, 15));
+  wrap.querySelector('#full').onclick = () => nav(el2 => StageExam.render(el2, 25));
+}
+
+const StageExam = (() => {
+  function buildPool(n){
+    const quizItems = [];
+    WORLDS.forEach(w => {
+      QUIZ[w.id].forEach(q => quizItems.push({type:'quiz', w:w.id, q}));
+      BOSS[w.id].forEach(q => quizItems.push({type:'quiz', w:w.id, q}));
+    });
+    const sqlItems = [];
+    SQL_TASKS_W5.forEach(t => sqlItems.push({type:'sql', w:'w5', task:t}));
+    SQL_TASKS_W6.forEach(t => sqlItems.push({type:'sql', w:'w6', task:t}));
+    const sqlCount = n >= 25 ? 4 : 2;
+    const chosenSql = pick(sqlItems, sqlCount);
+    const chosenQuiz = pick(quizItems, n - chosenSql.length);
+    return shuffle([...chosenQuiz, ...chosenSql]);
+  }
+
+  function render(el, n){
+    const items = buildPool(n);
+    let idx = 0, correct = 0, xpGain = 0, byWorld = {};
+    WORLDS.forEach(w => byWorld[w.id] = {ok:0, total:0});
+
+    const wrap = document.createElement('div');
+    wrap.className = 'stagewrap examwrap g-warn';
+    el.appendChild(wrap);
+    let timer = null, timeLeft = 0;
+
+    function clearTimer(){ if(timer){ clearInterval(timer); timer=null; } }
+
+    function paint(){
+      const it = items[idx];
+      wrap.innerHTML = `
+        <div class="stagehead">
+          <button class="backlnk" id="quit">✕</button>
+          <div class="qprog"><i style="width:${Math.round(idx/items.length*100)}%"></i></div>
+          <div class="examn">Frage ${idx+1}/${items.length}</div>
+        </div>
+      `;
+      wrap.querySelector('#quit').onclick = () => { clearTimer(); nav(renderMap); };
+      if(it.type === 'quiz') paintQuiz(it);
+      else paintSql(it);
+    }
+
+    function paintQuiz(it){
+      const q = it.q;
+      const order = shuffle(q.o.map((_,i)=>i));
+      const opts = order.map(i=>q.o[i]);
+      const cIdx = order.indexOf(q.c);
+      timeLeft = 32;
+      const body = document.createElement('div');
+      body.innerHTML = `
+        <div class="timerbar"><i id="tbar" style="width:100%"></i></div>
+        <h3 class="qtext">${esc(q.q)}</h3>
+        <div class="opts">${opts.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o)}</button>`).join('')}</div>
+      `;
+      wrap.appendChild(body);
+      let answered = false;
+      body.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => {
+        if(answered) return; answered = true; clearTimer();
+        const i = parseInt(b.getAttribute('data-i'),10);
+        const ok = i === cIdx;
+        body.querySelectorAll('.opt').forEach((bb,bi) => { bb.disabled = true; if(bi===cIdx) bb.classList.add('correct'); else if(bi===i) bb.classList.add('wrong'); });
+        registerAnswer(it.w, ok, q.e);
+      }));
+      timer = setInterval(() => {
+        timeLeft -= 0.1;
+        const b = body.querySelector('#tbar');
+        if(b) b.style.width = Math.max(0, timeLeft/32*100)+'%';
+        if(timeLeft<=0 && !answered){ answered = true; clearTimer();
+          body.querySelectorAll('.opt').forEach((bb,bi) => { bb.disabled = true; if(bi===cIdx) bb.classList.add('correct'); });
+          registerAnswer(it.w, false, q.e);
+        }
+      }, 100);
+    }
+
+    function paintSql(it){
+      const t = it.task;
+      const body = document.createElement('div');
+      body.innerHTML = `
+        <p class="qcount">SQL-Aufgabe</p>
+        <div class="sqltask">${t.prompt}</div>
+        <details class="schemabox"><summary>📋 Tabellen anzeigen</summary><div class="schemas">${schemaHtmlMini()}</div></details>
+        <textarea id="sqlin" class="sqlin" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="SELECT ..."></textarea>
+        <div class="sqlbtns">
+          <button class="btn" id="runBtn">▶ Ausführen</button>
+          <button class="btn primary" id="subBtn">✓ Antwort abgeben</button>
+          <button class="btn" id="skipBtn">Überspringen</button>
+        </div>
+        <div id="sqlout" class="sqlout"></div>
+      `;
+      wrap.appendChild(body);
+      body.querySelector('#runBtn').onclick = () => {
+        const sql = body.querySelector('#sqlin').value.trim();
+        const db = SQLEngine.cloneDb(SEED_DB);
+        const r = SQLEngine.run(sql, db, {mutate:true});
+        const out = body.querySelector('#sqlout');
+        if(!r.ok){ out.innerHTML = `<p class="sqlmsg err">⚠️ ${esc(r.error)}</p>`; return; }
+        if(r.type==='select') out.innerHTML = tableHtml(r.columns, r.rows);
+        else out.innerHTML = `<p class="sqlmsg ok">✓ ${r.affected} Zeile(n) betroffen.</p>`;
+      };
+      body.querySelector('#subBtn').onclick = () => {
+        const sql = body.querySelector('#sqlin').value.trim();
+        const userDb = SQLEngine.cloneDb(SEED_DB);
+        const ur = SQLEngine.run(sql, userDb, {mutate:true});
+        let ok = false;
+        if(ur.ok){
+          const solDb = SQLEngine.cloneDb(SEED_DB);
+          const sr = SQLEngine.run(t.sol, solDb, {mutate:true});
+          if(t.type==='select') ok = SQLEngine.compareResults(ur, sr, !!t.orderMatters);
+          else ok = JSON.stringify((userDb[t.table]||[]).map(r=>JSON.stringify(Object.entries(r).sort())).sort()) === JSON.stringify((solDb[t.table]||[]).map(r=>JSON.stringify(Object.entries(r).sort())).sort());
+        }
+        registerAnswer(it.w, ok, 'Musterlösung: '+t.sol);
+      };
+      body.querySelector('#skipBtn').onclick = () => registerAnswer(it.w, false, 'Übersprungen. Musterlösung: '+t.sol);
+    }
+
+    function schemaHtmlMini(){
+      return Object.keys(SEED_DB).map(t => {
+        const rows = SEED_DB[t].slice(0,2);
+        const cols = Object.keys(SEED_DB[t][0]||{});
+        return `<div class="schemat"><h5>${t}</h5><div class="tblwrap"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${r[c]===null?'<i>NULL</i>':esc(r[c])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+      }).join('');
+    }
+    function tableHtml(cols, rows){
+      const shown = rows.slice(0,20);
+      return `<div class="tblwrap"><table class="restbl"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${shown.map(r=>`<tr>${r.map(v=>`<td>${v===null?'<i>NULL</i>':esc(v)}</td>`).join('')}</tr>`).join('')||'<tr><td>0 Zeilen</td></tr>'}</tbody></table></div>`;
+    }
+
+    function registerAnswer(worldId, ok, expl){
+      clearTimer();
+      byWorld[worldId].total++;
+      if(ok){ byWorld[worldId].ok++; correct++; xpGain += 12; }
+      noteWeak(worldId, ok);
+      const msg = document.createElement('div');
+      msg.className = 'expl ' + (ok?'ok':'no');
+      msg.innerHTML = `<b>${ok?'Richtig!':'Nicht ganz.'}</b> ${esc(String(expl||''))}
+        <div class="nextrow"><button class="btn primary" id="nextBtn">${idx+1>=items.length?'Ergebnis anzeigen':'Weiter →'}</button></div>`;
+      wrap.appendChild(msg);
+      const advance = () => {
+        idx++;
+        wrap.innerHTML = '';
+        if(idx >= items.length){ finish(); return; }
+        paint();
+      };
+      const nb = wrap.querySelector('#nextBtn');
+      nb.focus();
+      nb.onclick = advance;
+    }
+
+    function finish(){
+      const pct = Math.round(correct/items.length*100);
+      if(S.examBest===null || pct > S.examBest){ S.examBest = pct; saveState(); }
+      addXp(xpGain);
+      wrap.innerHTML = '';
+      const weakWorlds = WORLDS.filter(w => byWorld[w.id].total>0 && (byWorld[w.id].ok/byWorld[w.id].total) < 0.7);
+      const card = document.createElement('div');
+      card.className = 'resultcard exam ' + (pct>=70?'win':'lose');
+      card.innerHTML = `
+        <div class="confwrap"></div>
+        <span class="ricon">${pct>=70?'🏆':'📚'}</span>
+        <h2>${pct}% erreicht</h2>
+        <p>${correct} von ${items.length} richtig · +${xpGain} XP</p>
+        <div class="worldbars">
+          ${WORLDS.map(w => {
+            const d = byWorld[w.id];
+            const p = d.total ? Math.round(d.ok/d.total*100) : null;
+            return `<div class="wbar"><span class="wblabel">${w.icon} ${esc(w.title)}</span><div class="wbtrack"><i style="width:${p===null?0:p}%" class="${p!==null&&p<70?'low':''}"></i></div><span class="wbpct">${p===null?'–':p+'%'}</span></div>`;
+          }).join('')}
+        </div>
+        ${weakWorlds.length ? `<p class="weaktip">🎯 Noch üben: ${weakWorlds.map(w=>esc(w.title)).join(', ')}</p>` : `<p class="weaktip ok">Stark in allen Themen — weiter so!</p>`}
+        <div class="rbtns">
+          <button class="btn" id="again">Neuer Versuch</button>
+          <button class="btn primary" id="toMap">Zur Karte</button>
+        </div>
+      `;
+      wrap.appendChild(card);
+      if(pct>=70) confettiBurst(card.querySelector('.confwrap'));
+      card.querySelector('#again').onclick = () => nav(renderExamIntro);
+      card.querySelector('#toMap').onclick = () => nav(renderMap);
+    }
+
+    paint();
+    return () => clearTimer();
+  }
+  return {render};
+})();
+/* ============================================================
+   Init
+   ============================================================ */
+renderHud();
+nav(renderMap);
+</script>
+</body></html>
